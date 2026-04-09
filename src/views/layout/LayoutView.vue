@@ -3,8 +3,8 @@
     <NetworkBackground :mode="bgMode" />
     <div class="page-overlay"></div>
 
-    <el-container class="page-shell">
-      <el-header class="top-header">
+    <el-container class="page-shell" :class="{ 'page-shell--immersive': isResearchRoute }">
+      <el-header class="top-header" :class="{ 'top-header--immersive': isResearchRoute }">
         <div class="brand-section">
           <div class="brand-text">
             <h1>Argus</h1>
@@ -13,12 +13,7 @@
         </div>
 
         <div class="header-actions">
-          <el-menu
-            class="top-menu"
-            mode="horizontal"
-            :default-active="$route.path"
-            router
-          >
+          <el-menu class="top-menu" mode="horizontal" :default-active="$route.path" router>
             <el-menu-item index="/research">Research</el-menu-item>
             <el-menu-item index="/team">Team</el-menu-item>
             <el-menu-item index="/project">Project</el-menu-item>
@@ -33,27 +28,32 @@
         </div>
       </el-header>
 
-      <el-main class="main-content">
+      <el-main class="main-content" :class="{ 'main-content--immersive': isResearchRoute }">
         <div class="content-panel">
           <router-view />
         </div>
       </el-main>
 
-      <el-footer class="footer">
-        © 2026 Argus
+      <el-footer v-if="!isResearchRoute" class="footer">
+        (c) 2026 Argus
       </el-footer>
     </el-container>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { computed, onMounted, provide, readonly, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import NetworkBackground from '@/views/components/NetworkBackground.vue'
 
+const route = useRoute()
 const isDark = ref(true)
 
 const bgMode = computed(() => (isDark.value ? 'dark' : 'light'))
 const themeClass = computed(() => (isDark.value ? 'theme-dark' : 'theme-light'))
+const isResearchRoute = computed(() => route.path === '/research')
+
+provide('argusTheme', readonly(isDark))
 
 function toggleTheme() {
   isDark.value = !isDark.value
@@ -104,6 +104,10 @@ watch(isDark, (val) => {
   background: transparent;
 }
 
+.page-shell--immersive {
+  min-height: 100vh;
+}
+
 .top-header {
   height: 82px;
   padding: 0 32px;
@@ -131,7 +135,7 @@ watch(isDark, (val) => {
         font-weight: 700;
         letter-spacing: 0.6px;
         color: var(--brand-title);
-        font-family: "Georgia", "Times New Roman", serif;
+        font-family: 'Georgia', 'Times New Roman', serif;
       }
 
       p {
@@ -152,6 +156,12 @@ watch(isDark, (val) => {
     flex: 1;
     justify-content: flex-end;
   }
+}
+
+.top-header--immersive {
+  position: sticky;
+  top: 0;
+  z-index: 5;
 }
 
 .top-menu {
@@ -182,11 +192,11 @@ watch(isDark, (val) => {
       color 0.3s ease,
       background 0.3s ease,
       transform 0.25s ease;
-    font-family: "Georgia", "Times New Roman", serif;
+    font-family: 'Georgia', 'Times New Roman', serif;
   }
 
   :deep(.el-menu-item::after) {
-    content: "";
+    content: '';
     position: absolute;
     left: 50%;
     bottom: 14px;
@@ -263,17 +273,13 @@ watch(isDark, (val) => {
   justify-content: center;
 }
 
-// .content-panel {
-//   width: 100%;
-//   min-height: calc(100vh - 82px - 56px - 48px);
-//   background: var(--panel-bg);
-//   border: 1px solid var(--panel-border);
-//   border-radius: 20px;
-//   box-shadow: 0 14px 36px var(--panel-shadow);
-//   backdrop-filter: blur(16px);
-//   padding: 20px;
-//   overflow: hidden;
-// }
+.main-content--immersive {
+  padding: 0;
+}
+
+.content-panel {
+  width: 100%;
+}
 
 .footer {
   height: 56px;
@@ -286,23 +292,18 @@ watch(isDark, (val) => {
   background: transparent;
 }
 
-/* Dark Theme */
 .theme-dark {
   --page-bg: #020817;
-
   --overlay-center: rgba(255, 255, 255, 0.02);
   --overlay-mid: rgba(255, 255, 255, 0.008);
   --overlay-edge: rgba(0, 0, 0, 0.14);
   --overlay-top: rgba(2, 8, 23, 0.24);
   --overlay-bottom: rgba(2, 8, 23, 0.4);
-
   --nav-bg: rgba(9, 18, 30, 0.66);
   --nav-border: rgba(255, 255, 255, 0.08);
   --nav-shadow: rgba(0, 0, 0, 0.22);
-
   --brand-title: #f7f4ed;
   --brand-subtitle: #aeb9c7;
-
   --nav-text: #d8dee6;
   --nav-hover-text: #ffffff;
   --nav-active: #d4b06a;
@@ -310,38 +311,27 @@ watch(isDark, (val) => {
   --nav-active-bg: rgba(212, 176, 106, 0.08);
   --nav-active-line: rgba(212, 176, 106, 0.18);
   --nav-active-shadow: rgba(212, 176, 106, 0.35);
-
   --toggle-bg: rgba(255, 255, 255, 0.06);
   --toggle-text: #e2e8f0;
   --toggle-border: rgba(255, 255, 255, 0.12);
   --toggle-hover-bg: rgba(255, 255, 255, 0.1);
   --toggle-hover-border: rgba(212, 176, 106, 0.35);
-
-  --panel-bg: rgba(255, 255, 255, 0.07);
-  --panel-border: rgba(255, 255, 255, 0.08);
-  --panel-shadow: rgba(0, 0, 0, 0.22);
-
   --footer-text: #b9c3cf;
   --text-color: #e5e7eb;
 }
 
-/* Light Theme */
 .theme-light {
   --page-bg: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
-
   --overlay-center: rgba(255, 255, 255, 0.3);
   --overlay-mid: rgba(255, 255, 255, 0.16);
   --overlay-edge: rgba(226, 232, 240, 0.2);
   --overlay-top: rgba(248, 250, 252, 0.18);
   --overlay-bottom: rgba(241, 245, 249, 0.34);
-
   --nav-bg: rgba(255, 255, 255, 0.72);
   --nav-border: rgba(148, 163, 184, 0.16);
   --nav-shadow: rgba(15, 23, 42, 0.08);
-
   --brand-title: #0f172a;
   --brand-subtitle: #64748b;
-
   --nav-text: #334155;
   --nav-hover-text: #1e293b;
   --nav-active: #c59b4f;
@@ -349,17 +339,11 @@ watch(isDark, (val) => {
   --nav-active-bg: rgba(197, 155, 79, 0.08);
   --nav-active-line: rgba(197, 155, 79, 0.14);
   --nav-active-shadow: rgba(197, 155, 79, 0.22);
-
   --toggle-bg: rgba(255, 255, 255, 0.58);
   --toggle-text: #334155;
   --toggle-border: rgba(148, 163, 184, 0.22);
   --toggle-hover-bg: rgba(255, 255, 255, 0.8);
   --toggle-hover-border: rgba(197, 155, 79, 0.32);
-
-  --panel-bg: rgba(255, 255, 255, 0.58);
-  --panel-border: rgba(148, 163, 184, 0.22);
-  --panel-shadow: rgba(15, 23, 42, 0.08);
-
   --footer-text: #64748b;
   --text-color: #1e293b;
 }
@@ -427,9 +411,8 @@ watch(isDark, (val) => {
     padding: 18px;
   }
 
-  .content-panel {
-    min-height: calc(100vh - 180px);
-    padding: 16px;
+  .main-content--immersive {
+    padding: 0;
   }
 }
 </style>

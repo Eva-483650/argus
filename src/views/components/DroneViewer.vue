@@ -56,11 +56,12 @@ onMounted(() => {
   const { width, height } = getContainerSize(container)
 
   scene = new THREE.Scene()
+  scene.background = new THREE.Color('#eef3fb')
 
   camera = new THREE.PerspectiveCamera(45, width / height, 0.01, 1000)
   camera.position.set(0, 0.2, 3)
 
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
   renderer.setSize(width, height)
   renderer.outputColorSpace = THREE.SRGBColorSpace
@@ -86,7 +87,7 @@ onMounted(() => {
 
   const loader = new GLTFLoader()
   loader.load(
-    '/models/drone.glb',
+    '/models/glbfile.glb',
     (gltf) => {
       model = gltf.scene
 
@@ -99,6 +100,8 @@ onMounted(() => {
 
       scene.add(model)
       frameModel(model)
+      model.rotation.x = -0.2
+      model.rotation.y = Math.PI / 4
       console.log('Model loaded:', gltf)
     },
     undefined,

@@ -90,8 +90,7 @@ const fitCameraToObject = (object) => {
   framing.center.copy(center)
   framing.baseScale.copy(object.scale)
 
-  const fitHeightDistance =
-    maxSize / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)))
+  const fitHeightDistance = maxSize / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)))
   const fitWidthDistance = fitHeightDistance / camera.aspect
   framing.distance = 1.18 * Math.max(fitHeightDistance, fitWidthDistance)
 
@@ -170,52 +169,110 @@ const applySceneState = () => {
 
   const overallLift = overview * 0.18 + detail * 0.22 + emotion * 0.34
   const introArc = Math.sin(intro * Math.PI)
-  const introSweepX = mix(2.1, -1.35, intro) - Math.sin(intro * Math.PI * 1.15) * 0.95
-  const introSweepY = mix(1.34, -1.08, intro) - Math.sin(intro * Math.PI) * 0.48
-  const introSweepZ = mix(0.94, 0.2, intro) - Math.sin(intro * Math.PI) * 0.16
 
-  model.rotation.x = 0.24 - intro * 0.26 + introArc * 0.12 + overview * 0.08 + detail * 0.3 + emotion * 0.26
-  model.rotation.y = -0.58 - intro * 1.12 + introArc * 0.34 + overview * 0.78 + detail * 0.62 + emotion * 0.4
+  // =========================
+  // 1) 模型首屏轨迹：右上 -> 绕弧线 -> 左下
+  // =========================
+  const modelIntroAngle = mix(Math.PI * 0.18, Math.PI * 1.28, intro)
+  const modelIntroRadiusX = mix(3.25, 1.7, intro)
+  const modelIntroRadiusY = mix(2.35, 1.55, intro)
+
+  const introSweepX = Math.cos(modelIntroAngle) * modelIntroRadiusX
+  const introSweepY = Math.sin(modelIntroAngle) * modelIntroRadiusY
+  const introSweepZ = mix(1.02, 0.18, intro) - introArc * 0.16
+
+  // =========================
+  // 2) 模型旋转
+  // =========================
+  model.rotation.x =
+    0.24 - intro * 0.26 + introArc * 0.12 + overview * 0.08 + detail * 0.3 + emotion * 0.26
+
+  model.rotation.y =
+    -0.58 - intro * 1.12 + introArc * 0.34 + overview * 0.78 + detail * 0.62 + emotion * 0.4
+
   model.rotation.z = 0.28 - intro * 0.46 + introArc * 0.22 + detail * 0.18 - emotion * 0.16
 
+  // =========================
+  // 3) 模型位置
+  // =========================
   model.position.set(
-    framing.center.x + introSweepX + overview * 0.52 - detail * 0.18 + emotion * 0.24 - 0.3,
+    framing.center.x + introSweepX + overview * 0.52 - detail * 0.18 + emotion * 0.24 - 0.12,
     framing.center.y + introSweepY - overallLift + intro * 0.18,
     framing.center.z + introSweepZ - detail * 0.52 - emotion * 0.92,
   )
 
+  // =========================
+  // 4) 模型缩放
+  // =========================
   const scaleFactor = 1.74 - intro * 0.82 + introArc * 0.12 + detail * 0.07 + emotion * 0.12
+
   model.scale.copy(framing.baseScale).multiplyScalar(scaleFactor)
 
+  // =========================
+  // 5) 相机首屏轨迹：同步沿圆弧跟拍
+  //    比模型更远、更高一点，形成“宣传片式跟镜”
+  // =========================
+  const cameraIntroAngle = mix(Math.PI * 0.1, Math.PI * 1.18, intro)
+  const cameraIntroRadiusX = mix(framing.distance * 2.45, framing.distance * 1.52, intro)
+  const cameraIntroRadiusY = mix(framing.distance * 1.9, framing.distance * 1.22, intro)
+
   const introCamera = {
-    x: framing.center.x + framing.distance * 1.74,
-    y: framing.center.y + framing.distance * 1.22,
-    z: framing.center.z + framing.distance * 0.54,
+    x: framing.center.x + Math.cos(cameraIntroAngle) * cameraIntroRadiusX,
+    y: framing.center.y + Math.sin(cameraIntroAngle) * cameraIntroRadiusY,
+    z:
+      framing.center.z +
+      mix(framing.distance * 1.18, framing.distance * 0.72, intro) +
+      introArc * framing.distance * 0.12,
   }
 
+  // Hero阶段镜头：停在左下区域附近，继续为后续段落过渡服务
   const heroCamera = {
-    x: framing.center.x - framing.distance * 0.96,
-    y: framing.center.y - framing.distance * 0.72,
-    z: framing.center.z + framing.distance * 0.92,
+    x: framing.center.x - framing.distance * 1.18,
+    y: framing.center.y - framing.distance * 0.96,
+    z: framing.center.z + framing.distance * 0.86,
   }
 
   camera.position.set(
-    mix(introCamera.x, heroCamera.x, intro) - introArc * framing.distance * 1.48 - detail * framing.distance * 0.16 + emotion * framing.distance * 0.12,
-    mix(introCamera.y, heroCamera.y, intro) - introArc * framing.distance * 0.82 + overview * framing.distance * 0.08 + detail * framing.distance * 0.16,
-    mix(introCamera.z, heroCamera.z, intro) + introArc * framing.distance * 0.72 - overview * framing.distance * 0.08 - detail * framing.distance * 0.32 - emotion * framing.distance * 0.38,
+    mix(introCamera.x, heroCamera.x, intro) -
+      detail * framing.distance * 0.16 +
+      emotion * framing.distance * 0.12,
+    mix(introCamera.y, heroCamera.y, intro) +
+      overview * framing.distance * 0.08 +
+      detail * framing.distance * 0.16,
+    mix(introCamera.z, heroCamera.z, intro) -
+      overview * framing.distance * 0.08 -
+      detail * framing.distance * 0.32 -
+      emotion * framing.distance * 0.38,
   )
 
+  // =========================
+  // 6) 镜头目标点：跟随模型，但带一点延迟感
+  //    这样看起来更像真实摄影机在追踪主体
+  // =========================
+  const targetIntroX =
+    framing.center.x + Math.cos(modelIntroAngle + 0.18) * 0.72 + mix(0.52, -0.38, intro)
+
+  const targetIntroY =
+    framing.center.y + Math.sin(modelIntroAngle + 0.12) * 0.36 + mix(0.34, -0.26, intro)
+
+  const targetIntroZ = framing.center.z + introArc * 0.08
+
+  const targetHero = {
+    x: framing.center.x - 1.14 + detail * 0.2 + emotion * 0.14,
+    y: framing.center.y - 0.94 - detail * 0.1 - emotion * 0.04,
+    z: framing.center.z - detail * 0.18 - emotion * 0.24,
+  }
+
   controls.target.set(
-    framing.center.x + mix(1.02, -1.06, intro) - introArc * 0.52 + detail * 0.2 + emotion * 0.14,
-    framing.center.y + mix(0.82, -0.86, intro) - introArc * 0.28 - detail * 0.1 - emotion * 0.04,
-    framing.center.z + introArc * 0.18 - detail * 0.18 - emotion * 0.24,
+    mix(targetIntroX, targetHero.x, intro),
+    mix(targetIntroY, targetHero.y, intro),
+    mix(targetIntroZ, targetHero.z, intro),
   )
 
   controls.update()
   applyLightsForTheme()
   applyMaterialState()
 }
-
 
 const render = () => {
   animationId = requestAnimationFrame(render)

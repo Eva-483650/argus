@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # House-price-predictor
 
 This template should help get you started developing with Vue 3 in Vite.
@@ -33,3 +34,6 @@ pnpm build
 ```sh
 pnpm lint
 ```
+=======
+# argus
+>>>>>>> 18f9343b632d130da3cecdf31ba30c35eddd8d05

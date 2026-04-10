@@ -10,23 +10,9 @@
       <DroneSceneCanvas :theme-mode="themeMode" @ready="setupExperience" />
     </div>
 
-    <nav class="showcase-sidebar" aria-label="Section navigation">
-      <button
-        v-for="section in sections"
-        :key="section.id"
-        class="showcase-dot"
-        :data-target="section.id"
-        type="button"
-        @click="scrollToSection(section.id)"
-      >
-        <span class="showcase-dot__bullet"></span>
-        <span class="showcase-dot__label">{{ section.nav }}</span>
-      </button>
-    </nav>
-
     <div class="showcase-scroll-hint">
       <span class="showcase-scroll-hint__line"></span>
-      <span class="showcase-scroll-hint__text">Scroll to navigate</span>
+      <span class="showcase-scroll-hint__text">{{ currentStepLabel }}</span>
     </div>
 
     <div class="drone-showcase__content">
@@ -41,7 +27,40 @@
         :caption="section.caption"
         :metrics="section.metrics"
         :align="section.align"
+        :variant="section.variant"
       />
+
+      <section id="section-demo-video" class="demo-video-section">
+        <div class="demo-video-section__inner">
+          <div class="demo-video-section__copy">
+            <p class="demo-video-section__eyebrow">Demo Video</p>
+            <h2 class="demo-video-section__title">See the system in a real traffic scene.</h2>
+            <p class="demo-video-section__body">
+              Use this section to show the full pipeline in motion: multimodal input, small-object
+              detection under adverse conditions, and the final response on a realistic scene. For
+              judges, this is the shortest path from concept to evidence.
+            </p>
+          </div>
+
+          <div class="demo-video-frame">
+            <video
+              v-if="demoVideo.src"
+              class="demo-video-frame__media"
+              :src="demoVideo.src"
+              :poster="demoVideo.poster || undefined"
+              controls
+              playsinline
+              preload="metadata"
+            ></video>
+
+            <div v-else class="demo-video-frame__placeholder">
+              <span class="demo-video-frame__badge">Demo Placeholder</span>
+              <p class="demo-video-frame__hint">Add the final evaluation video here so judges can verify the method on a complete driving sequence.</p>
+              <code class="demo-video-frame__path">/videos/drone-demo.mp4</code>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   </main>
 </template>
@@ -59,184 +78,293 @@ const injectedTheme = inject('argusTheme', ref(true))
 const themeMode = computed(() => (injectedTheme.value ? 'dark' : 'light'))
 
 const pageRef = ref(null)
+const currentSection = ref('section-launch')
+const demoVideo = {
+  src: '',
+  poster: '',
+}
 
 const sections = [
   {
     id: 'section-launch',
     nav: '01',
     backgroundLabel: 'Overview',
-    eyebrow: 'Launch Sequence',
-    title: 'One drone. Three camera languages. One continuous scroll story.',
+    label: 'Overview',
+    eyebrow: 'Research Value',
+    title: 'Argus focuses on the hardest targets to detect when weather and visibility break standard vision pipelines.',
     description:
-      'The opening shot establishes the silhouette. The drone starts oversized in the lower-left foreground, takes a wide orbital path, and settles into the hero framing.\n\nCopy, side navigation, and the scroll hint are part of the same visual system instead of a separate overlay layer.',
-    caption: 'Intro flight path / hero copy / side navigation',
+      'The project targets multimodal small object detection in all-weather traffic scenarios, where rain, haze, glare, low light, and motion blur make distant or weak targets easy to miss.\n\nFor judges, the key question is not whether the interface can present a model attractively, but whether the system solves a meaningful perception problem. Argus is positioned around that problem first: reliable detection when visual evidence is incomplete, unstable, or easily overwhelmed by the scene.',
+    caption: 'Problem framing / evaluation context / why the task matters',
     align: 'right',
+    variant: 'hero',
     metrics: [
-      { value: '42 mm', label: 'Field of view' },
-      { value: '4.8 s', label: 'Intro duration' },
+      { value: 'All-weather', label: 'Target scenario' },
+      { value: 'Small objects', label: 'Core challenge' },
     ],
   },
   {
     id: 'section-detail',
     nav: '02',
-    backgroundLabel: 'Detail',
-    eyebrow: 'Precision Orbit',
-    title: 'The second screen switches to a structural rail and tighter framing.',
+    backgroundLabel: 'Method',
+    label: 'Method',
+    eyebrow: 'Technical Approach',
+    title: 'The method combines multiple sensing cues so detection does not depend on a single fragile visual stream.',
     description:
-      'Scroll drives a new camera track. The drone changes posture, shifts laterally, and reveals rotor, arm, and gimbal relationships with a more technical rhythm.',
-    caption: 'Camera rail / rotation shift / metal polish',
+      'Argus is designed as a multimodal perception pipeline. Instead of trusting one camera view under changing weather, it aligns complementary signals and uses them jointly to recover small targets that are weak, partially occluded, or easily buried in background noise.\n\nThis section should help a reviewer understand the contribution quickly: the work is about robustness, fusion, and traffic-scene perception under adverse conditions, not just a visually polished 3D presentation.',
+    caption: 'Multimodal fusion / robustness strategy / technical contribution',
     align: 'left',
+    variant: 'method',
     metrics: [
-      { value: '3-axis', label: 'Gimbal system' },
-      { value: '12 km', label: 'Transmission range' },
+      { value: 'Multimodal', label: 'Input strategy' },
+      { value: 'Robustness', label: 'Design priority' },
     ],
   },
   {
     id: 'section-emotion',
     nav: '03',
-    backgroundLabel: 'Emotion',
-    eyebrow: 'Emotional Close-up',
-    title: 'The third screen becomes a restrained close-up with controlled tension.',
+    backgroundLabel: 'Outcome',
+    label: 'Result',
+    eyebrow: 'Evaluation Focus',
+    title: 'What matters in the final review is whether the system stays credible when the scene becomes difficult.',
     description:
-      'The camera pushes closer, the pose becomes more deliberate, and the material tone shifts with the light. The DOM layer and the WebGL layer stay locked together.',
-    caption: 'Close framing / surface shift / synchronized storytelling',
+      'The outcome should be judged on evidence: clearer target recovery, more stable perception under adverse weather, and stronger practical value for traffic scenarios where missed detections carry real cost.\n\nThis final narrative beat should leave judges with a precise conclusion. Argus is not only a concept demo; it is a research system built to improve detection reliability in conditions where conventional approaches are least dependable.',
+    caption: 'Expected evidence / application value / final takeaway',
     align: 'right',
+    variant: 'outcome',
     metrics: [
-      { value: '0.12 s', label: 'Response time' },
-      { value: '360 deg', label: 'Spatial awareness' },
+      { value: 'Traffic scenes', label: 'Application domain' },
+      { value: 'Reliable detection', label: 'Review standard' },
     ],
   },
 ]
 
+const navigationItems = [
+  ...sections.map(({ id, nav, label, eyebrow }) => ({ id, nav, label, eyebrow })),
+  {
+    id: 'section-demo-video',
+    nav: '04',
+    label: 'Demo',
+    eyebrow: 'System Evidence',
+  },
+]
+
+const currentStepLabel = computed(() => {
+  const activeItem = navigationItems.find((item) => item.id === currentSection.value)
+  if (!activeItem) {
+    return 'Scroll to navigate'
+  }
+  return `${activeItem.nav} ${activeItem.label}`
+})
+
 let context
 let refreshHandler
 
-const scrollToSection = (id) => {
-  const target = document.getElementById(id)
-  target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+function setCurrentSection(id) {
+  currentSection.value = id
 }
 
 const setupExperience = ({ sceneState, handleResize, playIntro }) => {
   if (!pageRef.value || context) return
 
   context = gsap.context(() => {
-    const sidebar = pageRef.value.querySelector('.showcase-sidebar')
+    const page = pageRef.value
     const scrollHint = pageRef.value.querySelector('.showcase-scroll-hint')
-    const dots = gsap.utils.toArray('.showcase-dot')
-    const sectionNodes = sections.map((section) => document.getElementById(section.id)).filter(Boolean)
+    const sectionNodes = sections
+      .map((section) => document.getElementById(section.id))
+      .filter(Boolean)
     const copies = gsap.utils.toArray('.story-copy')
     const backgroundWords = gsap.utils.toArray('.story-section__background')
+    const launchSection = document.getElementById('section-launch')
+    const launchCopy = launchSection?.querySelector('.story-copy')
+    const launchBackground = launchSection?.querySelector('.story-section__background')
 
-    gsap.set([sidebar, scrollHint], { autoAlpha: 0, y: 24 })
+    gsap.set([scrollHint], { autoAlpha: 0, y: 24 })
     gsap.set(copies, { autoAlpha: 0, y: 72 })
     gsap.set(backgroundWords, { autoAlpha: 0, yPercent: 14 })
 
     gsap
-      .timeline({ defaults: { ease: 'power4.out' } })
+      .timeline({ defaults: { ease: 'power3.out' } })
       .add(playIntro(), 0)
-      .to(sidebar, { autoAlpha: 1, y: 0, duration: 3.8 }, 1.25)
-      .to(scrollHint, { autoAlpha: 1, y: 0, duration: 4.1 }, 1.6)
+      .to(launchCopy, { autoAlpha: 1, y: 0, duration: 1.05 }, 2.7)
+      .to(launchBackground, { autoAlpha: 0.72, yPercent: 0, duration: 1.15 }, 2.8)
+      .to(scrollHint, { autoAlpha: 1, y: 0, duration: 2.6 }, 1.05)
 
     const overviewSection = document.getElementById('section-launch')
     const detailSection = document.getElementById('section-detail')
     const emotionSection = document.getElementById('section-emotion')
+    const demoSection = document.getElementById('section-demo-video')
 
     if (overviewSection) {
-      gsap.timeline({
-        scrollTrigger: {
-          trigger: overviewSection,
-          start: 'top top',
-          end: 'bottom top',
-          scrub: 1.2,
-        },
-      }).to(sceneState, { overview: 1, ease: 'none' })
+      gsap
+        .timeline({
+          scrollTrigger: {
+            trigger: overviewSection,
+            start: 'top top',
+            end: 'bottom top',
+            scrub: 0.68,
+          },
+        })
+        .to(sceneState, { overview: 1, ease: 'none' })
     }
 
     if (detailSection) {
-      gsap.timeline({
-        scrollTrigger: {
-          trigger: detailSection,
-          start: 'top bottom',
-          end: 'bottom top',
-          scrub: 1.25,
-        },
-      })
+      gsap
+        .timeline({
+          scrollTrigger: {
+            trigger: detailSection,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 0.74,
+          },
+        })
         .to(sceneState, { detail: 1, ease: 'none' })
         .to(sceneState, { overview: 0.68, ease: 'none' }, 0)
     }
 
     if (emotionSection) {
-      gsap.timeline({
-        scrollTrigger: {
-          trigger: emotionSection,
-          start: 'top bottom',
-          end: 'bottom top',
-          scrub: 1.3,
-        },
-      })
+      gsap
+        .timeline({
+          scrollTrigger: {
+            trigger: emotionSection,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 0.82,
+          },
+        })
         .to(sceneState, { emotion: 1, ease: 'none' })
         .to(sceneState, { detail: 0.86, ease: 'none' }, 0)
     }
 
-    sectionNodes.forEach((section, index) => {
+    navigationItems.forEach((item) => {
+      const node = document.getElementById(item.id)
+      if (!node) return
+
+      ScrollTrigger.create({
+        trigger: node,
+        start: item.id === 'section-demo-video' ? 'top 55%' : 'top 45%',
+        end: item.id === 'section-demo-video' ? 'bottom 40%' : 'bottom 45%',
+        onToggle: (self) => {
+          if (self.isActive) {
+            setCurrentSection(item.id)
+          }
+        },
+      })
+    })
+
+    if (demoSection) {
+      ScrollTrigger.create({
+        trigger: demoSection,
+        start: 'top bottom',
+        end: 'bottom top',
+        onEnter: () => setCurrentSection('section-demo-video'),
+        onEnterBack: () => setCurrentSection('section-demo-video'),
+      })
+    }
+
+    sectionNodes.forEach((section) => {
       const copy = section.querySelector('.story-copy')
       const background = section.querySelector('.story-section__background')
-      const dot = dots[index]
+
+      if (section.id === 'section-launch') {
+        return
+      }
 
       if (copy) {
-        gsap
-          .timeline({
-            scrollTrigger: {
-              trigger: section,
-              start: 'top 70%',
-              end: 'bottom 30%',
-              scrub: 0.9,
-            },
-          })
-          .fromTo(
-            copy,
-            { autoAlpha: 0, y: 72 },
-            { autoAlpha: 1, y: 0, ease: 'power2.out', duration: 0.45 },
-          )
-          .to(copy, {
-            autoAlpha: 0.18,
-            y: -36,
-            ease: 'power2.inOut',
-            duration: 0.55,
-          })
+        const isDetailSection = section.id === 'section-detail'
+
+        if (isDetailSection) {
+          gsap
+            .timeline({
+              scrollTrigger: {
+                trigger: section,
+                start: 'top 78%',
+                end: 'bottom 42%',
+                scrub: 0.58,
+              },
+            })
+            .fromTo(
+              copy,
+              { autoAlpha: 0, y: 96 },
+              { autoAlpha: 1, y: 0, ease: 'power2.out', duration: 0.48 },
+            )
+            .to(copy, {
+              autoAlpha: 1,
+              y: 0,
+              ease: 'none',
+              duration: 0.24,
+            })
+        } else {
+          gsap
+            .timeline({
+              scrollTrigger: {
+                trigger: section,
+                start: 'top 70%',
+                end: 'bottom 30%',
+                scrub: 0.64,
+              },
+            })
+            .fromTo(
+              copy,
+              { autoAlpha: 0, y: 72 },
+              { autoAlpha: 1, y: 0, ease: 'power2.out', duration: 0.34 },
+            )
+            .to(copy, {
+              autoAlpha: 0.18,
+              y: -36,
+              ease: 'power2.inOut',
+              duration: 0.42,
+            })
+        }
       }
 
       if (background) {
-        gsap
-          .timeline({
-            scrollTrigger: {
-              trigger: section,
-              start: 'top 76%',
-              end: 'bottom 32%',
-              scrub: 0.9,
-            },
-          })
-          .fromTo(
-            background,
-            { autoAlpha: 0, yPercent: 14 },
-            { autoAlpha: 0.78, yPercent: 0, ease: 'power2.out', duration: 0.5 },
-          )
-          .to(background, {
-            autoAlpha: 0.12,
-            yPercent: -10,
-            ease: 'power2.inOut',
-            duration: 0.5,
-          })
-      }
+  const isDetailSection = section.id === 'section-detail'
 
-      if (dot) {
-        ScrollTrigger.create({
+  if (isDetailSection) {
+    gsap
+      .timeline({
+        scrollTrigger: {
           trigger: section,
-          start: 'top center',
-          end: 'bottom center',
-          toggleClass: { targets: dot, className: 'is-active' },
-        })
-      }
+          start: 'top 82%',
+          end: 'bottom 40%',
+          scrub: 0.6,
+        },
+      })
+      .fromTo(
+        background,
+        { autoAlpha: 0, yPercent: 18 },
+        { autoAlpha: 0.92, yPercent: 0, ease: 'power2.out', duration: 0.4 },
+      )
+      .to(background, {
+        autoAlpha: 0.38,
+        yPercent: -6,
+        ease: 'power2.inOut',
+        duration: 0.32,
+      })
+  } else {
+    gsap
+      .timeline({
+        scrollTrigger: {
+          trigger: section,
+          start: 'top 76%',
+          end: 'bottom 32%',
+          scrub: 0.66,
+        },
+      })
+      .fromTo(
+        background,
+        { autoAlpha: 0, yPercent: 14 },
+        { autoAlpha: 0.78, yPercent: 0, ease: 'power2.out', duration: 0.36 },
+      )
+      .to(background, {
+        autoAlpha: 0.12,
+        yPercent: -10,
+        ease: 'power2.inOut',
+        duration: 0.34,
+      })
+  }
+}
+
     })
 
     gsap.to('.showcase-scroll-hint__line', {
@@ -266,25 +394,35 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.is-left .story-section__background {
+  left: auto;
+  right: 0;
+  text-align: right;
+}
 .drone-showcase {
   --showcase-bg: transparent;
-  --showcase-title: #f5f8fc;
-  --showcase-body: rgba(220, 229, 238, 0.84);
-  --showcase-caption: rgba(177, 194, 210, 0.68);
-  --showcase-accent: #84d6ff;
-  --showcase-accent-soft: rgba(132, 214, 255, 0.78);
-  --showcase-card-top: rgba(255, 255, 255, 0.12);
-  --showcase-card-bottom: rgba(96, 118, 255, 0.03);
-  --showcase-card-base: rgba(6, 11, 22, 0.34);
-  --showcase-card-border: rgba(129, 159, 255, 0.16);
-  --showcase-card-shadow: rgba(0, 0, 0, 0.12);
-  --showcase-metric-border: rgba(255, 255, 255, 0.11);
-  --showcase-ghost: rgba(170, 198, 255, 0.08);
-  --showcase-dot: rgba(122, 153, 255, 0.2);
-  --showcase-dot-active: #dff3ff;
-  --showcase-dot-text: rgba(208, 220, 232, 0.72);
-  --showcase-mesh: rgba(128, 162, 255, 0.05);
-  --showcase-hint: rgba(214, 226, 238, 0.76);
+  --showcase-title: #f4efe5;
+  --showcase-body: rgba(222, 219, 210, 0.82);
+  --showcase-caption: rgba(174, 171, 164, 0.7);
+  --showcase-accent: #c8a86a;
+  --showcase-accent-soft: rgba(200, 168, 106, 0.78);
+  --showcase-card-top: rgba(255, 255, 255, 0.06);
+  --showcase-card-bottom: rgba(255, 255, 255, 0.015);
+  --showcase-card-base: rgba(10, 14, 20, 0.26);
+  --showcase-card-border: rgba(200, 168, 106, 0.12);
+  --showcase-card-shadow: rgba(0, 0, 0, 0.14);
+  --showcase-metric-border: rgba(255, 255, 255, 0.08);
+  --showcase-ghost: rgba(241, 232, 214, 0.06);
+  --showcase-dot: rgba(200, 168, 106, 0.14);
+  --showcase-dot-active: #f4efe5;
+  --showcase-dot-text: rgba(210, 205, 194, 0.68);
+  --showcase-sidebar-bg: rgba(10, 14, 20, 0.28);
+  --showcase-sidebar-border: rgba(200, 168, 106, 0.1);
+  --showcase-sidebar-shadow: rgba(5, 10, 16, 0.16);
+  --showcase-sidebar-rail: rgba(200, 168, 106, 0.14);
+  --showcase-sidebar-progress: linear-gradient(180deg, rgba(200, 168, 106, 0.94) 0%, rgba(237, 227, 205, 0.72) 100%);
+  --showcase-mesh: rgba(227, 217, 196, 0.035);
+  --showcase-hint: rgba(218, 212, 200, 0.72);
   position: relative;
   min-height: 360vh;
   overflow: clip;
@@ -294,23 +432,28 @@ onBeforeUnmount(() => {
 
 .theme-light {
   --showcase-bg: transparent;
-  --showcase-title: #102033;
-  --showcase-body: rgba(42, 61, 83, 0.82);
-  --showcase-caption: rgba(76, 98, 124, 0.76);
-  --showcase-accent: #506cff;
-  --showcase-accent-soft: rgba(80, 108, 255, 0.72);
-  --showcase-card-top: rgba(255, 255, 255, 0.72);
-  --showcase-card-bottom: rgba(232, 238, 255, 0.42);
-  --showcase-card-base: rgba(255, 255, 255, 0.34);
-  --showcase-card-border: rgba(80, 108, 255, 0.16);
-  --showcase-card-shadow: rgba(104, 127, 156, 0.08);
-  --showcase-metric-border: rgba(122, 143, 170, 0.22);
-  --showcase-ghost: rgba(38, 62, 122, 0.09);
-  --showcase-dot: rgba(38, 62, 122, 0.16);
-  --showcase-dot-active: #102033;
-  --showcase-dot-text: rgba(44, 63, 85, 0.76);
-  --showcase-mesh: rgba(16, 32, 51, 0.05);
-  --showcase-hint: rgba(52, 73, 98, 0.76);
+  --showcase-title: #1d2430;
+  --showcase-body: rgba(56, 61, 69, 0.82);
+  --showcase-caption: rgba(98, 102, 108, 0.74);
+  --showcase-accent: #b78b43;
+  --showcase-accent-soft: rgba(183, 139, 67, 0.74);
+  --showcase-card-top: rgba(255, 255, 255, 0.68);
+  --showcase-card-bottom: rgba(245, 241, 234, 0.48);
+  --showcase-card-base: rgba(255, 253, 248, 0.34);
+  --showcase-card-border: rgba(183, 139, 67, 0.14);
+  --showcase-card-shadow: rgba(82, 72, 52, 0.08);
+  --showcase-metric-border: rgba(145, 135, 118, 0.18);
+  --showcase-ghost: rgba(72, 64, 50, 0.08);
+  --showcase-dot: rgba(183, 139, 67, 0.14);
+  --showcase-dot-active: #1d2430;
+  --showcase-dot-text: rgba(78, 76, 72, 0.74);
+  --showcase-sidebar-bg: rgba(255, 251, 244, 0.48);
+  --showcase-sidebar-border: rgba(183, 139, 67, 0.12);
+  --showcase-sidebar-shadow: rgba(94, 82, 62, 0.06);
+  --showcase-sidebar-rail: rgba(183, 139, 67, 0.14);
+  --showcase-sidebar-progress: linear-gradient(180deg, rgba(183, 139, 67, 0.92) 0%, rgba(244, 236, 219, 0.88) 100%);
+  --showcase-mesh: rgba(69, 60, 47, 0.04);
+  --showcase-hint: rgba(88, 84, 77, 0.74);
 }
 
 .drone-showcase__backdrop,
@@ -330,7 +473,6 @@ onBeforeUnmount(() => {
 }
 
 .drone-showcase__content,
-.showcase-sidebar,
 .showcase-scroll-hint {
   position: relative;
   z-index: 2;
@@ -339,8 +481,8 @@ onBeforeUnmount(() => {
 .drone-showcase__orb {
   position: absolute;
   border-radius: 999px;
-  filter: blur(110px);
-  opacity: 0.34;
+  filter: blur(128px);
+  opacity: 0.16;
 }
 
 .drone-showcase__orb--a {
@@ -348,7 +490,7 @@ onBeforeUnmount(() => {
   left: -10%;
   width: 42vw;
   height: 42vw;
-  background: rgba(41, 242, 255, 0.18);
+  background: rgba(198, 170, 120, 0.14);
 }
 
 .drone-showcase__orb--b {
@@ -356,7 +498,7 @@ onBeforeUnmount(() => {
   bottom: 8%;
   width: 34vw;
   height: 34vw;
-  background: rgba(109, 94, 255, 0.16);
+  background: rgba(255, 247, 233, 0.1);
 }
 
 .drone-showcase__mesh {
@@ -372,57 +514,6 @@ onBeforeUnmount(() => {
   );
 }
 
-.showcase-sidebar {
-  position: fixed;
-  top: 50%;
-  right: 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  transform: translateY(-50%);
-}
-
-.showcase-dot {
-  border: 0;
-  padding: 0;
-  background: transparent;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  color: var(--showcase-dot-text);
-}
-
-.showcase-dot__bullet {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--showcase-dot);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
-  transition:
-    transform 0.3s ease,
-    background 0.3s ease,
-    box-shadow 0.3s ease;
-}
-
-.showcase-dot__label {
-  font-size: 11px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-}
-
-.showcase-dot.is-active .showcase-dot__bullet,
-.showcase-dot:hover .showcase-dot__bullet {
-  transform: scale(1.25);
-  background: var(--showcase-dot-active);
-  box-shadow: 0 0 18px rgba(138, 193, 255, 0.4);
-}
-
-.showcase-dot.is-active .showcase-dot__label,
-.showcase-dot:hover .showcase-dot__label {
-  color: var(--showcase-title);
-}
-
 .showcase-scroll-hint {
   position: fixed;
   left: min(7vw, 88px);
@@ -431,6 +522,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 12px;
   color: var(--showcase-hint);
+  min-width: 128px;
 }
 
 .showcase-scroll-hint__line {
@@ -440,7 +532,9 @@ onBeforeUnmount(() => {
 }
 
 .showcase-scroll-hint__text {
-  font-size: 11px;
+  font-size: 0.6875rem;
+  font-family: var(--argus-font-body);
+  font-weight: 700;
   letter-spacing: 0.28em;
   text-transform: uppercase;
 }
@@ -450,22 +544,152 @@ onBeforeUnmount(() => {
   z-index: 2;
 }
 
+.demo-video-section {
+  position: relative;
+  min-height: 140vh;
+  display: flex;
+  align-items: center;
+  padding: 14vh 0 18vh;
+}
+
+.demo-video-section__inner {
+  width: min(1440px, calc(100% - 72px));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(280px, 0.75fr) minmax(0, 1.45fr);
+  gap: 48px;
+  align-items: start;
+}
+
+.demo-video-section__copy {
+  position: sticky;
+  top: 128px;
+  display: grid;
+  gap: 18px;
+}
+
+.demo-video-section__eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-family: var(--argus-font-body);
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--showcase-accent-soft);
+}
+
+.demo-video-section__title {
+  margin: 0;
+  font-family: var(--argus-font-display);
+  font-weight: 700;
+  font-size: clamp(34px, 4.8vw, 72px);
+  line-height: 1;
+  letter-spacing: -0.045em;
+  color: var(--showcase-title);
+  text-wrap: balance;
+}
+
+.demo-video-section__body {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 1rem;
+  line-height: 1.92;
+  font-family: var(--argus-font-body);
+  font-weight: 500;
+  color: var(--showcase-body);
+}
+
+.demo-video-frame {
+  min-height: 72vh;
+  border-top: 1px solid var(--showcase-card-border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0));
+}
+
+.demo-video-frame__media,
+.demo-video-frame__placeholder {
+  width: 100%;
+  min-height: 72vh;
+}
+
+.demo-video-frame__media {
+  display: block;
+  object-fit: cover;
+  background: #05070a;
+}
+
+.demo-video-frame__placeholder {
+  display: grid;
+  place-content: center;
+  gap: 14px;
+  padding: 40px;
+  text-align: center;
+  color: var(--showcase-body);
+}
+
+.demo-video-frame__badge {
+  justify-self: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--showcase-card-border);
+  font-size: 0.6875rem;
+  font-family: var(--argus-font-body);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--showcase-accent-soft);
+}
+
+.demo-video-frame__hint {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.85;
+  font-family: var(--argus-font-body);
+  font-weight: 500;
+}
+
+.demo-video-frame__path {
+  justify-self: center;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.875rem;
+  font-family: var(--argus-font-body);
+  font-weight: 600;
+  color: var(--showcase-title);
+}
+
 @media (max-width: 960px) {
   .drone-showcase {
     min-height: 390vh;
   }
 
-  .showcase-sidebar {
-    right: 16px;
-  }
-
-  .showcase-dot__label {
-    display: none;
-  }
-
   .showcase-scroll-hint {
     left: 20px;
     bottom: 20px;
+  }
+
+  .demo-video-section {
+    min-height: 120vh;
+    padding: 12vh 0 16vh;
+  }
+
+  .demo-video-section__inner {
+    width: min(100%, calc(100% - 32px));
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
+
+  .demo-video-section__copy {
+    position: static;
+  }
+
+  .demo-video-frame,
+  .demo-video-frame__media,
+  .demo-video-frame__placeholder {
+    min-height: 48vh;
   }
 }
 </style>

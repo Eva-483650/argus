@@ -19,6 +19,7 @@ const props = defineProps({
 const emit = defineEmits(['ready'])
 
 const containerRef = ref(null)
+const modelUrl = `${import.meta.env.BASE_URL}models/glbfile.glb`
 
 let scene
 let camera
@@ -48,6 +49,7 @@ const materialNodes = []
 
 const clamp01 = (value) => THREE.MathUtils.clamp(value, 0, 1)
 const mix = (start, end, progress) => THREE.MathUtils.lerp(start, end, progress)
+const easeState = (value) => THREE.MathUtils.smootherstep(clamp01(value), 0, 1)
 const colorFromHex = (hex) => new THREE.Color(hex)
 
 const themePalette = {
@@ -124,6 +126,11 @@ const applyMaterialState = () => {
 
   const themeBlend = themeState.blend
   const polish = clamp01(sceneState.overview * 0.55 + sceneState.detail * 0.7 + sceneState.emotion)
+  const modelOpacity = THREE.MathUtils.clamp(
+    0.62 + sceneState.overview * 0.04 + sceneState.detail * 0.08 + sceneState.emotion * 0.04,
+    0.6,
+    0.78,
+  )
 
   const darkTarget = themePalette.dark.colorA
     .clone()
@@ -140,6 +147,11 @@ const applyMaterialState = () => {
     const blendedBase = baseColor.clone().lerp(targetColor, 0.48 + polish * 0.35)
 
     material.color.copy(blendedBase)
+    if ('opacity' in material) {
+      material.transparent = true
+      material.opacity = modelOpacity
+      material.depthWrite = modelOpacity > 0.74
+    }
 
     if ('metalness' in material) {
       material.metalness = THREE.MathUtils.clamp(baseMetalness + 0.1 + polish * 0.16, 0, 1)
@@ -162,10 +174,11 @@ const applyMaterialState = () => {
 const applySceneState = () => {
   if (!model) return
 
-  const intro = clamp01(sceneState.intro)
-  const overview = clamp01(sceneState.overview)
-  const detail = clamp01(sceneState.detail)
-  const emotion = clamp01(sceneState.emotion)
+  const intro = easeState(sceneState.intro)
+  const overview = easeState(sceneState.overview)
+  const detail = easeState(sceneState.detail)
+  const emotion = easeState(sceneState.emotion)
+  const detailFlight = detail
 
   const overallLift = overview * 0.18 + detail * 0.22 + emotion * 0.34
   const introArc = Math.sin(intro * Math.PI)
@@ -185,26 +198,42 @@ const applySceneState = () => {
   // 2) 模型旋转
   // =========================
   model.rotation.x =
-    0.24 - intro * 0.26 + introArc * 0.12 + overview * 0.08 + detail * 0.3 + emotion * 0.26
+    0.24 -
+    intro * 0.26 +
+    introArc * 0.12 +
+    overview * 0.08 +
+    detail * 0.3 +
+    emotion * 0.26
 
   model.rotation.y =
-    -0.58 - intro * 1.12 + introArc * 0.34 + overview * 0.78 + detail * 0.62 + emotion * 0.4
+    -0.58 -
+    intro * 1.12 +
+    introArc * 0.34 +
+    overview * 0.78 +
+    detail * 0.62 +
+    emotion * 0.4
 
-  model.rotation.z = 0.28 - intro * 0.46 + introArc * 0.22 + detail * 0.18 - emotion * 0.16
+  model.rotation.z =
+    0.28 -
+    intro * 0.46 +
+    introArc * 0.22 +
+    detail * 0.18 -
+    emotion * 0.16
 
   // =========================
   // 3) 模型位置
   // =========================
   model.position.set(
-    framing.center.x + introSweepX + overview * 0.52 - detail * 0.18 + emotion * 0.24 - 0.12,
-    framing.center.y + introSweepY - overallLift + intro * 0.18,
-    framing.center.z + introSweepZ - detail * 0.52 - emotion * 0.92,
+    framing.center.x + introSweepX + overview * 0.84 + detailFlight * 0.74 + emotion * 0.38 + 0.14,
+    framing.center.y + introSweepY - overallLift + intro * 0.18 + overview * 0.08 + 0.18,
+    framing.center.z + introSweepZ - overview * 0.06 - detail * 0.48 - emotion * 0.84,
   )
 
   // =========================
   // 4) 模型缩放
   // =========================
-  const scaleFactor = 1.74 - intro * 0.82 + introArc * 0.12 + detail * 0.07 + emotion * 0.12
+  const scaleFactor =
+    1.38 - intro * 0.48 + introArc * 0.06 + detail * 0.03 + emotion * 0.04
 
   model.scale.copy(framing.baseScale).multiplyScalar(scaleFactor)
 
@@ -217,12 +246,9 @@ const applySceneState = () => {
   const cameraIntroRadiusY = mix(framing.distance * 1.9, framing.distance * 1.22, intro)
 
   const introCamera = {
-    x: framing.center.x + Math.cos(cameraIntroAngle) * cameraIntroRadiusX,
-    y: framing.center.y + Math.sin(cameraIntroAngle) * cameraIntroRadiusY,
-    z:
-      framing.center.z +
-      mix(framing.distance * 1.18, framing.distance * 0.72, intro) +
-      introArc * framing.distance * 0.12,
+    x: framing.center.x + Math.cos(cameraIntroAngle) * cameraIntroRadiusX-0.2,
+    y: framing.center.y + Math.sin(cameraIntroAngle) * cameraIntroRadiusY+1.2,
+    z: framing.center.z + mix(framing.distance * 1.18, framing.distance * 0.72, intro) + introArc * framing.distance * 0.12,
   }
 
   // Hero阶段镜头：停在左下区域附近，继续为后续段落过渡服务
@@ -233,16 +259,9 @@ const applySceneState = () => {
   }
 
   camera.position.set(
-    mix(introCamera.x, heroCamera.x, intro) -
-      detail * framing.distance * 0.16 +
-      emotion * framing.distance * 0.12,
-    mix(introCamera.y, heroCamera.y, intro) +
-      overview * framing.distance * 0.08 +
-      detail * framing.distance * 0.16,
-    mix(introCamera.z, heroCamera.z, intro) -
-      overview * framing.distance * 0.08 -
-      detail * framing.distance * 0.32 -
-      emotion * framing.distance * 0.38,
+    mix(introCamera.x, heroCamera.x, intro) - detailFlight * framing.distance * 0.08 + emotion * framing.distance * 0.12,
+    mix(introCamera.y, heroCamera.y, intro) + overview * framing.distance * 0.08 + detail * framing.distance * 0.26,
+    mix(introCamera.z, heroCamera.z, intro) - overview * framing.distance * 0.08 - detail * framing.distance * 0.32 - emotion * framing.distance * 0.38,
   )
 
   // =========================
@@ -250,17 +269,21 @@ const applySceneState = () => {
   //    这样看起来更像真实摄影机在追踪主体
   // =========================
   const targetIntroX =
-    framing.center.x + Math.cos(modelIntroAngle + 0.18) * 0.72 + mix(0.52, -0.38, intro)
+    framing.center.x +
+    Math.cos(modelIntroAngle + 0.18) * 0.72 +
+    mix(0.52, -0.38, intro)
 
   const targetIntroY =
-    framing.center.y + Math.sin(modelIntroAngle + 0.12) * 0.36 + mix(0.34, -0.26, intro)
+    framing.center.y +
+    Math.sin(modelIntroAngle + 0.12) * 0.36 +
+    mix(0.34, -0.26, intro)
 
   const targetIntroZ = framing.center.z + introArc * 0.08
 
   const targetHero = {
-    x: framing.center.x - 1.14 + detail * 0.2 + emotion * 0.14,
-    y: framing.center.y - 0.94 - detail * 0.1 - emotion * 0.04,
-    z: framing.center.z - detail * 0.18 - emotion * 0.24,
+    x: framing.center.x - 0.46 + overview * 0.42 + detailFlight * 0.08 + emotion * 0.28,
+    y: framing.center.y - 0.86 - detail * 0.08 - emotion * 0.04,
+    z: framing.center.z - detail * 0.18 - emotion * 0.22,
   }
 
   controls.target.set(
@@ -338,7 +361,7 @@ onMounted(() => {
 
   const loader = new GLTFLoader()
   loader.load(
-    '/models/glbfile.glb',
+    modelUrl,
     (gltf) => {
       model = gltf.scene
 
@@ -369,7 +392,7 @@ onMounted(() => {
       emit('ready', {
         sceneState,
         handleResize,
-        playIntro: () => gsap.to(sceneState, { intro: 1, duration: 4.8, ease: 'power4.inOut' }),
+        playIntro: () => gsap.to(sceneState, { intro: 1, duration: 3.2, ease: 'power3.inOut' }),
       })
     },
     undefined,

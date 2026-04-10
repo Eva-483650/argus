@@ -13,12 +13,12 @@
         </div>
 
         <div class="header-actions">
-          <el-menu class="top-menu" mode="horizontal" :default-active="$route.path" router>
+          <el-menu class="top-menu" mode="horizontal" :default-active="$route.path":ellipsis="false" router>
             <el-menu-item index="/research">Research</el-menu-item>
-            <el-menu-item index="/team">Team</el-menu-item>
             <el-menu-item index="/project">Project</el-menu-item>
+            <el-menu-item index="/team">Team</el-menu-item>
             <el-menu-item index="/downloads">Downloads</el-menu-item>
-            <el-menu-item index="/contact">Contact</el-menu-item>
+            <!-- <el-menu-item index="/contact">Contact</el-menu-item> -->
           </el-menu>
 
           <button class="theme-toggle" @click="toggleTheme">
@@ -74,12 +74,22 @@ watch(isDark, (val) => {
 </script>
 
 <style lang="scss" scoped>
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap');
+
 .layout-container {
+  --argus-font-display: 'Sora', 'Avenir Next', 'Segoe UI', sans-serif;
+  --argus-font-body: 'Manrope', 'Segoe UI', sans-serif;
+  --argus-text-display: clamp(2.375rem, 4vw, 4.5rem);
+  --argus-text-heading: 1.25rem;
+  --argus-text-body: 1rem;
+  --argus-text-meta: 0.75rem;
   position: relative;
   min-height: 100vh;
   overflow: hidden;
   background: var(--page-bg);
   color: var(--text-color);
+  font-family: var(--argus-font-body);
+  font-kerning: normal;
 }
 
 .page-overlay {
@@ -109,7 +119,7 @@ watch(isDark, (val) => {
 }
 
 .top-header {
-  height: 82px;
+  height: 80px;
   padding: 0 32px;
   background: var(--nav-bg);
   backdrop-filter: blur(14px);
@@ -131,19 +141,21 @@ watch(isDark, (val) => {
 
       h1 {
         margin: 0;
-        font-size: 24px;
+        font-size: 1.375rem;
         font-weight: 700;
-        letter-spacing: 0.6px;
+        letter-spacing: -0.03em;
         color: var(--brand-title);
-        font-family: 'Georgia', 'Times New Roman', serif;
+        font-family: var(--argus-font-display);
       }
 
       p {
         margin: 3px 0 0;
-        font-size: 12px;
+        font-size: 0.75rem;
         color: var(--brand-subtitle);
-        letter-spacing: 0.7px;
+        letter-spacing: 0.18em;
         text-transform: uppercase;
+        font-family: var(--argus-font-body);
+        font-weight: 600;
       }
     }
   }
@@ -159,8 +171,10 @@ watch(isDark, (val) => {
 }
 
 .top-header--immersive {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 5;
 }
 
@@ -183,16 +197,16 @@ watch(isDark, (val) => {
     line-height: 70px;
     border-bottom: none !important;
     color: var(--nav-text) !important;
-    font-size: 15px;
+    font-size: 0.9375rem;
     font-weight: 600;
-    letter-spacing: 0.3px;
+    letter-spacing: -0.01em;
     padding: 0 22px;
     background: transparent !important;
     transition:
       color 0.3s ease,
       background 0.3s ease,
       transform 0.25s ease;
-    font-family: 'Georgia', 'Times New Roman', serif;
+    font-family: var(--argus-font-display);
   }
 
   :deep(.el-menu-item::after) {
@@ -248,6 +262,7 @@ watch(isDark, (val) => {
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.2px;
+  font-family: var(--argus-font-body);
 
   &:hover {
     transform: translateY(-1px);
@@ -274,7 +289,7 @@ watch(isDark, (val) => {
 }
 
 .main-content--immersive {
-  padding: 0;
+  padding: 82px 0 0;
 }
 
 .content-panel {
@@ -287,9 +302,11 @@ watch(isDark, (val) => {
   align-items: center;
   justify-content: center;
   color: var(--footer-text);
-  font-size: 13px;
-  letter-spacing: 0.4px;
+  font-size: 0.8125rem;
+  letter-spacing: 0.06em;
   background: transparent;
+  font-family: var(--argus-font-body);
+  font-weight: 500;
 }
 
 .theme-dark {
@@ -412,7 +429,7 @@ watch(isDark, (val) => {
   }
 
   .main-content--immersive {
-    padding: 0;
+    padding: 140px 0 0;
   }
 }
 </style>

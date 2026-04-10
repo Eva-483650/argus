@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 
 const routes = [
   {
@@ -33,12 +33,12 @@ const routes = [
         component: () => import('@/views/DownloadsView.vue'),
         meta: { title: 'Downloads' }
       },
-      {
-        path: 'contact',
-        name: 'Contact',
-        component: () => import('@/views/ContactView.vue'),
-        meta: { title: 'Contact' }
-      }
+      // {
+      //   path: 'contact',
+      //   name: 'Contact',
+      //   component: () => import('@/views/ContactView.vue'),
+      //   meta: { title: 'Contact' }
+      // }
     ]
   },
   {
@@ -48,7 +48,8 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  // Hash history avoids 404s when the app is hosted from a BaoTa subdirectory.
+  history: createWebHashHistory(),
   routes
 })
 

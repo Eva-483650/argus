@@ -30,18 +30,19 @@
         :variant="section.variant"
       />
 
-      <section id="section-demo-video" class="demo-video-section">
-        <div class="demo-video-section__inner">
-          <div class="demo-video-section__copy">
-            <p class="demo-video-section__eyebrow">Demo Video</p>
-            <h2 class="demo-video-section__title">See the system in a real traffic scene.</h2>
-            <p class="demo-video-section__body">
-              Use this section to show the full pipeline in motion: multimodal input, small-object
-              detection under adverse conditions, and the final response on a realistic scene. For
-              judges, this is the shortest path from concept to evidence.
-            </p>
-          </div>
-
+      <StorySection
+        :section-id="demoAct.id"
+        :background-label="demoAct.backgroundLabel"
+        :eyebrow="demoAct.eyebrow"
+        :title="demoAct.title"
+        :description="demoAct.description"
+        :caption="demoAct.caption"
+        :align="demoAct.align"
+        :variant="demoAct.variant"
+        :metrics="[]"
+        class="demo-video-section"
+      >
+        <template #media>
           <div class="demo-video-frame">
             <video
               v-if="demoVideo.src"
@@ -59,8 +60,8 @@
               <code class="demo-video-frame__path">/videos/drone-demo.mp4</code>
             </div>
           </div>
-        </div>
-      </section>
+        </template>
+      </StorySection>
     </div>
   </main>
 </template>
@@ -138,14 +139,23 @@ const sections = [
   },
 ]
 
+const demoAct = {
+  id: 'section-demo-video',
+  nav: '04',
+  backgroundLabel: 'Demo',
+  label: 'Demo',
+  eyebrow: 'System Evidence',
+  caption: 'Full-sequence validation / multimodal pipeline / reviewer proof layer',
+  title: 'See the full pipeline operate on a complete traffic sequence.',
+  description:
+    'This final act should convert the narrative into verification. Show the end-to-end run here: multimodal input, adverse-weather behavior, small-object recovery, and the system response in a realistic driving scene so judges can inspect the evidence directly.',
+  align: 'left',
+  variant: 'demo',
+}
+
 const navigationItems = [
   ...sections.map(({ id, nav, label, eyebrow }) => ({ id, nav, label, eyebrow })),
-  {
-    id: 'section-demo-video',
-    nav: '04',
-    label: 'Demo',
-    eyebrow: 'System Evidence',
-  },
+  (({ id, nav, label, eyebrow }) => ({ id, nav, label, eyebrow }))(demoAct),
 ]
 
 const currentStepLabel = computed(() => {
@@ -169,11 +179,10 @@ const setupExperience = ({ sceneState, handleResize, playIntro }) => {
   context = gsap.context(() => {
     const page = pageRef.value
     const scrollHint = pageRef.value.querySelector('.showcase-scroll-hint')
-    const sectionNodes = sections
-      .map((section) => document.getElementById(section.id))
-      .filter(Boolean)
-    const copies = gsap.utils.toArray('.story-copy')
-    const backgroundWords = gsap.utils.toArray('.story-section__background')
+    const sectionNodes = gsap.utils.toArray(page.querySelectorAll('.story-section'))
+    const copies = gsap.utils.toArray(page.querySelectorAll('.story-copy'))
+    const backgroundWords = gsap.utils.toArray(page.querySelectorAll('.story-section__background'))
+    const demoFrame = page.querySelector('.demo-video-frame')
     const launchSection = document.getElementById('section-launch')
     const launchCopy = launchSection?.querySelector('.story-copy')
     const launchBackground = launchSection?.querySelector('.story-section__background')
@@ -181,6 +190,7 @@ const setupExperience = ({ sceneState, handleResize, playIntro }) => {
     gsap.set([scrollHint], { autoAlpha: 0, y: 24 })
     gsap.set(copies, { autoAlpha: 0, y: 72 })
     gsap.set(backgroundWords, { autoAlpha: 0, yPercent: 14 })
+    gsap.set(demoFrame, { autoAlpha: 0, y: 88, scale: 0.975, transformOrigin: 'center center' })
 
     gsap
       .timeline({ defaults: { ease: 'power3.out' } })
@@ -192,7 +202,6 @@ const setupExperience = ({ sceneState, handleResize, playIntro }) => {
     const overviewSection = document.getElementById('section-launch')
     const detailSection = document.getElementById('section-detail')
     const emotionSection = document.getElementById('section-emotion')
-    const demoSection = document.getElementById('section-demo-video')
 
     if (overviewSection) {
       gsap
@@ -251,27 +260,60 @@ const setupExperience = ({ sceneState, handleResize, playIntro }) => {
       })
     })
 
-    if (demoSection) {
-      ScrollTrigger.create({
-        trigger: demoSection,
-        start: 'top bottom',
-        end: 'bottom top',
-        onEnter: () => setCurrentSection('section-demo-video'),
-        onEnterBack: () => setCurrentSection('section-demo-video'),
-      })
-    }
-
     sectionNodes.forEach((section) => {
       const copy = section.querySelector('.story-copy')
       const background = section.querySelector('.story-section__background')
+      const frame = section.querySelector('.demo-video-frame')
+      const isDetailSection = section.id === 'section-detail'
+      const isDemoSection = section.id === demoAct.id
 
       if (section.id === 'section-launch') {
         return
       }
 
-      if (copy) {
-        const isDetailSection = section.id === 'section-detail'
+      if (isDemoSection) {
+        const demoTimeline = gsap.timeline({
+          scrollTrigger: {
+            trigger: section,
+            start: 'top 74%',
+            end: 'bottom 28%',
+            scrub: 0.72,
+          },
+        })
 
+        if (copy) {
+          demoTimeline
+            .fromTo(
+              copy,
+              { autoAlpha: 0, y: 88 },
+              { autoAlpha: 1, y: 0, ease: 'power2.out', duration: 0.42 },
+              0,
+            )
+            .to(copy, {
+              autoAlpha: 1,
+              y: 0,
+              ease: 'none',
+              duration: 0.34,
+            })
+        }
+
+        if (frame) {
+          demoTimeline
+            .fromTo(
+              frame,
+              { autoAlpha: 0, y: 88, scale: 0.975 },
+              { autoAlpha: 1, y: 0, scale: 1, ease: 'power2.out', duration: 0.46 },
+              0.08,
+            )
+            .to(frame, {
+              autoAlpha: 1,
+              y: 0,
+              scale: 1,
+              ease: 'none',
+              duration: 0.38,
+            })
+        }
+      } else if (copy) {
         if (isDetailSection) {
           gsap
             .timeline({
@@ -318,52 +360,71 @@ const setupExperience = ({ sceneState, handleResize, playIntro }) => {
       }
 
       if (background) {
-  const isDetailSection = section.id === 'section-detail'
-
-  if (isDetailSection) {
-    gsap
-      .timeline({
-        scrollTrigger: {
-          trigger: section,
-          start: 'top 82%',
-          end: 'bottom 40%',
-          scrub: 0.6,
-        },
-      })
-      .fromTo(
-        background,
-        { autoAlpha: 0, yPercent: 18 },
-        { autoAlpha: 0.92, yPercent: 0, ease: 'power2.out', duration: 0.4 },
-      )
-      .to(background, {
-        autoAlpha: 0.38,
-        yPercent: -6,
-        ease: 'power2.inOut',
-        duration: 0.32,
-      })
-  } else {
-    gsap
-      .timeline({
-        scrollTrigger: {
-          trigger: section,
-          start: 'top 76%',
-          end: 'bottom 32%',
-          scrub: 0.66,
-        },
-      })
-      .fromTo(
-        background,
-        { autoAlpha: 0, yPercent: 14 },
-        { autoAlpha: 0.78, yPercent: 0, ease: 'power2.out', duration: 0.36 },
-      )
-      .to(background, {
-        autoAlpha: 0.12,
-        yPercent: -10,
-        ease: 'power2.inOut',
-        duration: 0.34,
-      })
-  }
-}
+        if (isDetailSection) {
+          gsap
+            .timeline({
+              scrollTrigger: {
+                trigger: section,
+                start: 'top 82%',
+                end: 'bottom 40%',
+                scrub: 0.6,
+              },
+            })
+            .fromTo(
+              background,
+              { autoAlpha: 0, yPercent: 18 },
+              { autoAlpha: 0.92, yPercent: 0, ease: 'power2.out', duration: 0.4 },
+            )
+            .to(background, {
+              autoAlpha: 0.38,
+              yPercent: -6,
+              ease: 'power2.inOut',
+              duration: 0.32,
+            })
+        } else if (isDemoSection) {
+          gsap
+            .timeline({
+              scrollTrigger: {
+                trigger: section,
+                start: 'top 78%',
+                end: 'bottom 28%',
+                scrub: 0.68,
+              },
+            })
+            .fromTo(
+              background,
+              { autoAlpha: 0, yPercent: 16 },
+              { autoAlpha: 0.84, yPercent: 0, ease: 'power2.out', duration: 0.4 },
+            )
+            .to(background, {
+              autoAlpha: 0.3,
+              yPercent: -8,
+              ease: 'power2.inOut',
+              duration: 0.4,
+            })
+        } else {
+          gsap
+            .timeline({
+              scrollTrigger: {
+                trigger: section,
+                start: 'top 76%',
+                end: 'bottom 32%',
+                scrub: 0.66,
+              },
+            })
+            .fromTo(
+              background,
+              { autoAlpha: 0, yPercent: 14 },
+              { autoAlpha: 0.78, yPercent: 0, ease: 'power2.out', duration: 0.36 },
+            )
+            .to(background, {
+              autoAlpha: 0.12,
+              yPercent: -10,
+              ease: 'power2.inOut',
+              duration: 0.34,
+            })
+        }
+      }
 
     })
 
@@ -545,58 +606,7 @@ onBeforeUnmount(() => {
 }
 
 .demo-video-section {
-  position: relative;
   min-height: 140vh;
-  display: flex;
-  align-items: center;
-  padding: 14vh 0 18vh;
-}
-
-.demo-video-section__inner {
-  width: min(1440px, calc(100% - 72px));
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: minmax(280px, 0.75fr) minmax(0, 1.45fr);
-  gap: 48px;
-  align-items: start;
-}
-
-.demo-video-section__copy {
-  position: sticky;
-  top: 128px;
-  display: grid;
-  gap: 18px;
-}
-
-.demo-video-section__eyebrow {
-  margin: 0;
-  font-size: 0.75rem;
-  font-family: var(--argus-font-body);
-  font-weight: 700;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: var(--showcase-accent-soft);
-}
-
-.demo-video-section__title {
-  margin: 0;
-  font-family: var(--argus-font-display);
-  font-weight: 700;
-  font-size: clamp(34px, 4.8vw, 72px);
-  line-height: 1;
-  letter-spacing: -0.045em;
-  color: var(--showcase-title);
-  text-wrap: balance;
-}
-
-.demo-video-section__body {
-  margin: 0;
-  max-width: 34ch;
-  font-size: 1rem;
-  line-height: 1.92;
-  font-family: var(--argus-font-body);
-  font-weight: 500;
-  color: var(--showcase-body);
 }
 
 .demo-video-frame {
@@ -673,17 +683,6 @@ onBeforeUnmount(() => {
 
   .demo-video-section {
     min-height: 120vh;
-    padding: 12vh 0 16vh;
-  }
-
-  .demo-video-section__inner {
-    width: min(100%, calc(100% - 32px));
-    grid-template-columns: 1fr;
-    gap: 26px;
-  }
-
-  .demo-video-section__copy {
-    position: static;
   }
 
   .demo-video-frame,

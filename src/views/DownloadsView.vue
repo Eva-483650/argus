@@ -34,6 +34,8 @@ const repositoryUrl = 'https://github.com/Eva-483650/argus'
 .downloads-view {
   min-height: calc(100vh - 56px);
   padding: 40px 24px 72px;
+  font-family: var(--argus-font-body);
+  font-kerning: normal;
 }
 
 .downloads-shell {
@@ -56,7 +58,8 @@ const repositoryUrl = 'https://github.com/Eva-483650/argus'
 
 .downloads-hero__eyebrow {
   margin: 0 0 10px;
-  font-size: 12px;
+  font-size: 0.75rem;
+  font-family: var(--argus-font-body);
   font-weight: 700;
   letter-spacing: 0.28em;
   text-transform: uppercase;
@@ -65,16 +68,21 @@ const repositoryUrl = 'https://github.com/Eva-483650/argus'
 
 .downloads-hero__title {
   margin: 0;
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: clamp(34px, 4vw, 54px);
-  line-height: 1.04;
+  font-family: var(--argus-font-display);
+  font-size: clamp(2.25rem, 4vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
   color: var(--downloads-title);
+  text-wrap: balance;
 }
 
 .downloads-hero__intro {
   margin: 16px 0 0;
-  font-size: 16px;
-  line-height: 1.85;
+  font-size: 1rem;
+  font-family: var(--argus-font-body);
+  font-weight: 500;
+  line-height: 1.9;
   color: var(--downloads-copy);
 }
 
@@ -95,7 +103,8 @@ const repositoryUrl = 'https://github.com/Eva-483650/argus'
   border-radius: 999px;
   background: var(--downloads-badge-bg);
   color: var(--downloads-badge-text);
-  font-size: 12px;
+  font-size: 0.75rem;
+  font-family: var(--argus-font-body);
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -103,16 +112,20 @@ const repositoryUrl = 'https://github.com/Eva-483650/argus'
 
 .downloads-card__title {
   margin: 0;
-  font-size: 30px;
-  line-height: 1.12;
+  font-family: var(--argus-font-display);
+  font-size: clamp(1.8rem, 2.6vw, 2.6rem);
+  line-height: 1.02;
   font-weight: 700;
+  letter-spacing: -0.03em;
   color: var(--downloads-heading);
 }
 
 .downloads-card__body {
   margin: 16px 0 0;
-  font-size: 15px;
-  line-height: 1.85;
+  font-size: 1rem;
+  font-family: var(--argus-font-body);
+  font-weight: 500;
+  line-height: 1.88;
   color: var(--downloads-copy);
 }
 
@@ -132,8 +145,10 @@ const repositoryUrl = 'https://github.com/Eva-483650/argus'
   border-radius: 999px;
   border: 1px solid transparent;
   text-decoration: none;
-  font-size: 14px;
+  font-size: 0.9375rem;
+  font-family: var(--argus-font-body);
   font-weight: 700;
+  letter-spacing: -0.01em;
   transition:
     transform 0.2s ease,
     background 0.2s ease,
@@ -173,7 +188,8 @@ const repositoryUrl = 'https://github.com/Eva-483650/argus'
 .downloads-meta__label {
   display: inline-block;
   margin-bottom: 10px;
-  font-size: 11px;
+  font-size: 0.6875rem;
+  font-family: var(--argus-font-body);
   font-weight: 700;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -182,7 +198,9 @@ const repositoryUrl = 'https://github.com/Eva-483650/argus'
 
 .downloads-meta__value {
   display: block;
-  font-size: 13px;
+  font-size: 0.8125rem;
+  font-family: var(--argus-font-body);
+  font-weight: 600;
   line-height: 1.7;
   color: var(--downloads-heading);
   word-break: break-all;
@@ -190,59 +208,61 @@ const repositoryUrl = 'https://github.com/Eva-483650/argus'
 
 .downloads-meta__text {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.75;
+  font-size: 0.875rem;
+  font-family: var(--argus-font-body);
+  font-weight: 500;
+  line-height: 1.78;
   color: var(--downloads-copy);
 }
 
 .theme-dark {
-  --downloads-shell-bg: rgba(8, 15, 26, 0.5);
-  --downloads-shell-top: rgba(255, 255, 255, 0.03);
-  --downloads-shell-bottom: rgba(255, 255, 255, 0.01);
-  --downloads-shell-border: rgba(255, 255, 255, 0.08);
-  --downloads-shell-shadow: rgba(0, 0, 0, 0.24);
-  --downloads-eyebrow: rgba(212, 176, 106, 0.82);
-  --downloads-title: #f8f3e7;
-  --downloads-heading: #f3eee4;
-  --downloads-copy: rgba(221, 229, 238, 0.82);
-  --downloads-card-border: rgba(255, 255, 255, 0.08);
-  --downloads-card-bg: rgba(255, 255, 255, 0.03);
-  --downloads-badge-bg: rgba(212, 176, 106, 0.1);
-  --downloads-badge-text: #d4b06a;
-  --downloads-button-bg: linear-gradient(135deg, #d4b06a, #b68a43);
+  --downloads-shell-bg: rgba(10, 14, 20, 0.28);
+  --downloads-shell-top: rgba(255, 255, 255, 0.06);
+  --downloads-shell-bottom: rgba(255, 255, 255, 0.015);
+  --downloads-shell-border: rgba(200, 168, 106, 0.12);
+  --downloads-shell-shadow: rgba(5, 10, 16, 0.16);
+  --downloads-eyebrow: rgba(200, 168, 106, 0.82);
+  --downloads-title: #f4efe5;
+  --downloads-heading: #f4efe5;
+  --downloads-copy: rgba(222, 219, 210, 0.82);
+  --downloads-card-border: rgba(200, 168, 106, 0.1);
+  --downloads-card-bg: rgba(255, 255, 255, 0.02);
+  --downloads-badge-bg: rgba(200, 168, 106, 0.1);
+  --downloads-badge-text: #c8a86a;
+  --downloads-button-bg: linear-gradient(135deg, #c8a86a, #b78b43);
   --downloads-button-text: #101724;
-  --downloads-button-shadow: rgba(212, 176, 106, 0.22);
-  --downloads-ghost-border: rgba(255, 255, 255, 0.12);
+  --downloads-button-shadow: rgba(200, 168, 106, 0.18);
+  --downloads-ghost-border: rgba(200, 168, 106, 0.12);
   --downloads-ghost-bg: rgba(255, 255, 255, 0.02);
-  --downloads-ghost-text: #e6edf5;
-  --downloads-meta-border: rgba(255, 255, 255, 0.08);
+  --downloads-ghost-text: #f1ebdf;
+  --downloads-meta-border: rgba(200, 168, 106, 0.1);
   --downloads-meta-bg: rgba(255, 255, 255, 0.02);
-  --downloads-meta-label: rgba(168, 182, 198, 0.82);
+  --downloads-meta-label: rgba(174, 171, 164, 0.72);
 }
 
 .theme-light {
-  --downloads-shell-bg: rgba(255, 255, 255, 0.72);
-  --downloads-shell-top: rgba(255, 255, 255, 0.72);
-  --downloads-shell-bottom: rgba(248, 250, 252, 0.52);
-  --downloads-shell-border: rgba(148, 163, 184, 0.18);
-  --downloads-shell-shadow: rgba(15, 23, 42, 0.08);
-  --downloads-eyebrow: rgba(78, 110, 189, 0.82);
-  --downloads-title: #4f78d4;
-  --downloads-heading: #1f2f49;
-  --downloads-copy: rgba(60, 73, 92, 0.9);
-  --downloads-card-border: rgba(148, 163, 184, 0.16);
+  --downloads-shell-bg: rgba(255, 251, 244, 0.48);
+  --downloads-shell-top: rgba(255, 255, 255, 0.68);
+  --downloads-shell-bottom: rgba(245, 241, 234, 0.48);
+  --downloads-shell-border: rgba(183, 139, 67, 0.14);
+  --downloads-shell-shadow: rgba(94, 82, 62, 0.06);
+  --downloads-eyebrow: rgba(183, 139, 67, 0.74);
+  --downloads-title: #1d2430;
+  --downloads-heading: #1d2430;
+  --downloads-copy: rgba(56, 61, 69, 0.82);
+  --downloads-card-border: rgba(183, 139, 67, 0.14);
   --downloads-card-bg: rgba(255, 255, 255, 0.56);
-  --downloads-badge-bg: rgba(79, 120, 212, 0.1);
-  --downloads-badge-text: #4f78d4;
-  --downloads-button-bg: linear-gradient(135deg, #4f78d4, #7a9eff);
-  --downloads-button-text: #f8fbff;
-  --downloads-button-shadow: rgba(79, 120, 212, 0.18);
-  --downloads-ghost-border: rgba(148, 163, 184, 0.22);
+  --downloads-badge-bg: rgba(183, 139, 67, 0.1);
+  --downloads-badge-text: #b78b43;
+  --downloads-button-bg: linear-gradient(135deg, #c59b4f, #b78b43);
+  --downloads-button-text: #1d2430;
+  --downloads-button-shadow: rgba(183, 139, 67, 0.16);
+  --downloads-ghost-border: rgba(183, 139, 67, 0.14);
   --downloads-ghost-bg: rgba(255, 255, 255, 0.5);
-  --downloads-ghost-text: #29416c;
-  --downloads-meta-border: rgba(148, 163, 184, 0.16);
+  --downloads-ghost-text: #1d2430;
+  --downloads-meta-border: rgba(183, 139, 67, 0.14);
   --downloads-meta-bg: rgba(255, 255, 255, 0.48);
-  --downloads-meta-label: rgba(101, 119, 146, 0.82);
+  --downloads-meta-label: rgba(98, 102, 108, 0.74);
 }
 
 @media (max-width: 860px) {

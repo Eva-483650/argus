@@ -93,6 +93,8 @@ const members = [
 .team-view {
   min-height: calc(100vh - 56px);
   padding: 40px 24px 72px;
+  font-family: var(--argus-font-body);
+  font-kerning: normal;
 }
 
 .team-shell {
@@ -115,7 +117,9 @@ const members = [
 
 .team-hero__eyebrow {
   margin: 0 0 10px;
-  font-size: 12px;
+  font-size: 0.75rem;
+  font-family: var(--argus-font-body);
+  font-weight: 700;
   letter-spacing: 0.32em;
   text-transform: uppercase;
   color: var(--team-eyebrow);
@@ -123,12 +127,13 @@ const members = [
 
 .team-hero__title {
   margin: 0;
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: clamp(34px, 4vw, 56px);
-  font-weight: 500;
-  line-height: 1.05;
-  letter-spacing: 0.02em;
+  font-family: var(--argus-font-display);
+  font-size: clamp(2.25rem, 4vw, 3.75rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
   color: var(--team-title);
+  text-wrap: balance;
 }
 
 .team-hero__divider {
@@ -196,14 +201,17 @@ const members = [
 }
 
 .team-card__photo--placeholder span {
-  font-size: 16px;
+  font-size: 1rem;
+  font-family: var(--argus-font-display);
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: -0.02em;
 }
 
 .team-card__photo--placeholder small {
   width: 86px;
-  font-size: 12px;
+  font-size: 0.75rem;
+  font-family: var(--argus-font-body);
+  font-weight: 600;
   line-height: 1.45;
   color: var(--team-photo-subtext);
 }
@@ -211,7 +219,9 @@ const members = [
 .team-card__media-caption {
   margin: 0;
   text-align: center;
-  font-size: 12px;
+  font-size: 0.75rem;
+  font-family: var(--argus-font-body);
+  font-weight: 500;
   line-height: 1.6;
   color: var(--team-muted);
 }
@@ -223,7 +233,8 @@ const members = [
 .team-card__index {
   display: inline-flex;
   margin-bottom: 10px;
-  font-size: 12px;
+  font-size: 0.75rem;
+  font-family: var(--argus-font-body);
   font-weight: 700;
   letter-spacing: 0.24em;
   text-transform: uppercase;
@@ -232,15 +243,19 @@ const members = [
 
 .team-card__name {
   margin: 0;
-  font-size: 32px;
-  line-height: 1.08;
+  font-family: var(--argus-font-display);
+  font-size: clamp(1.75rem, 2.4vw, 2.4rem);
+  line-height: 1;
   font-weight: 700;
+  letter-spacing: -0.03em;
   color: var(--team-name);
 }
 
 .team-card__role {
   margin: 8px 0 0;
-  font-size: 15px;
+  font-size: 0.9375rem;
+  font-family: var(--argus-font-body);
+  font-weight: 600;
   line-height: 1.6;
   color: var(--team-role);
 }
@@ -255,8 +270,10 @@ const members = [
 
 .team-card__bio {
   margin: 0;
-  font-size: 15px;
-  line-height: 1.82;
+  font-size: 1rem;
+  font-family: var(--argus-font-body);
+  font-weight: 500;
+  line-height: 1.9;
   color: var(--team-copy);
 }
 
@@ -277,7 +294,8 @@ const members = [
 .team-card__detail-label {
   display: inline-block;
   margin-bottom: 8px;
-  font-size: 11px;
+  font-size: 0.6875rem;
+  font-family: var(--argus-font-body);
   font-weight: 700;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -286,60 +304,62 @@ const members = [
 
 .team-card__detail p {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
+  font-family: var(--argus-font-body);
+  font-weight: 500;
   line-height: 1.7;
   color: var(--team-copy);
 }
 
 .theme-dark {
-  --team-shell-bg: rgba(8, 15, 26, 0.5);
-  --team-shell-top: rgba(255, 255, 255, 0.03);
-  --team-shell-bottom: rgba(255, 255, 255, 0.01);
-  --team-shell-border: rgba(255, 255, 255, 0.08);
-  --team-shell-shadow: rgba(0, 0, 0, 0.24);
-  --team-title: #f8f3e7;
-  --team-name: #f4efe4;
-  --team-eyebrow: rgba(212, 176, 106, 0.78);
-  --team-copy: rgba(222, 230, 239, 0.82);
-  --team-role: rgba(189, 201, 216, 0.84);
-  --team-muted: rgba(164, 176, 191, 0.78);
-  --team-divider: rgba(212, 176, 106, 0.32);
-  --team-card-line: rgba(255, 255, 255, 0.08);
-  --team-accent: #d4b06a;
-  --team-photo-border: rgba(255, 255, 255, 0.08);
-  --team-photo-shadow: rgba(0, 0, 0, 0.28);
-  --team-photo-top: rgba(37, 51, 70, 0.92);
-  --team-photo-bottom: rgba(14, 22, 35, 0.92);
-  --team-photo-glow: rgba(212, 176, 106, 0.18);
-  --team-photo-text: #edf3fb;
-  --team-photo-subtext: rgba(212, 220, 232, 0.7);
-  --team-detail-border: rgba(255, 255, 255, 0.08);
-  --team-detail-bg: rgba(255, 255, 255, 0.03);
+  --team-shell-bg: rgba(10, 14, 20, 0.28);
+  --team-shell-top: rgba(255, 255, 255, 0.06);
+  --team-shell-bottom: rgba(255, 255, 255, 0.015);
+  --team-shell-border: rgba(200, 168, 106, 0.12);
+  --team-shell-shadow: rgba(5, 10, 16, 0.16);
+  --team-title: #f4efe5;
+  --team-name: #f4efe5;
+  --team-eyebrow: rgba(200, 168, 106, 0.78);
+  --team-copy: rgba(222, 219, 210, 0.82);
+  --team-role: rgba(210, 205, 194, 0.78);
+  --team-muted: rgba(174, 171, 164, 0.72);
+  --team-divider: rgba(200, 168, 106, 0.18);
+  --team-card-line: rgba(200, 168, 106, 0.1);
+  --team-accent: #c8a86a;
+  --team-photo-border: rgba(200, 168, 106, 0.12);
+  --team-photo-shadow: rgba(5, 10, 16, 0.18);
+  --team-photo-top: rgba(25, 31, 40, 0.92);
+  --team-photo-bottom: rgba(11, 16, 23, 0.92);
+  --team-photo-glow: rgba(200, 168, 106, 0.14);
+  --team-photo-text: #f1ebdf;
+  --team-photo-subtext: rgba(210, 205, 194, 0.68);
+  --team-detail-border: rgba(200, 168, 106, 0.1);
+  --team-detail-bg: rgba(255, 255, 255, 0.02);
 }
 
 .theme-light {
-  --team-shell-bg: rgba(255, 255, 255, 0.72);
-  --team-shell-top: rgba(255, 255, 255, 0.72);
-  --team-shell-bottom: rgba(248, 250, 252, 0.52);
-  --team-shell-border: rgba(148, 163, 184, 0.18);
-  --team-shell-shadow: rgba(15, 23, 42, 0.08);
-  --team-title: #4f78d4;
-  --team-name: #1f2f49;
-  --team-eyebrow: rgba(78, 110, 189, 0.82);
-  --team-copy: rgba(60, 73, 92, 0.9);
-  --team-role: rgba(88, 103, 126, 0.88);
-  --team-muted: rgba(101, 119, 146, 0.82);
-  --team-divider: rgba(148, 163, 184, 0.32);
-  --team-card-line: rgba(148, 163, 184, 0.24);
-  --team-accent: #c59b4f;
-  --team-photo-border: rgba(148, 163, 184, 0.18);
-  --team-photo-shadow: rgba(15, 23, 42, 0.1);
-  --team-photo-top: rgba(248, 250, 252, 0.98);
-  --team-photo-bottom: rgba(231, 238, 247, 0.98);
-  --team-photo-glow: rgba(79, 120, 212, 0.18);
-  --team-photo-text: #29416c;
-  --team-photo-subtext: rgba(70, 95, 138, 0.78);
-  --team-detail-border: rgba(148, 163, 184, 0.16);
+  --team-shell-bg: rgba(255, 251, 244, 0.48);
+  --team-shell-top: rgba(255, 255, 255, 0.68);
+  --team-shell-bottom: rgba(245, 241, 234, 0.48);
+  --team-shell-border: rgba(183, 139, 67, 0.14);
+  --team-shell-shadow: rgba(94, 82, 62, 0.06);
+  --team-title: #1d2430;
+  --team-name: #1d2430;
+  --team-eyebrow: rgba(183, 139, 67, 0.74);
+  --team-copy: rgba(56, 61, 69, 0.82);
+  --team-role: rgba(88, 84, 77, 0.84);
+  --team-muted: rgba(98, 102, 108, 0.74);
+  --team-divider: rgba(183, 139, 67, 0.18);
+  --team-card-line: rgba(183, 139, 67, 0.16);
+  --team-accent: #b78b43;
+  --team-photo-border: rgba(183, 139, 67, 0.14);
+  --team-photo-shadow: rgba(94, 82, 62, 0.08);
+  --team-photo-top: rgba(255, 252, 247, 0.96);
+  --team-photo-bottom: rgba(244, 236, 219, 0.96);
+  --team-photo-glow: rgba(183, 139, 67, 0.12);
+  --team-photo-text: #1d2430;
+  --team-photo-subtext: rgba(88, 84, 77, 0.72);
+  --team-detail-border: rgba(183, 139, 67, 0.14);
   --team-detail-bg: rgba(255, 255, 255, 0.56);
 }
 

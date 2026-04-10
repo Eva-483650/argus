@@ -54,22 +54,26 @@ const colorFromHex = (hex) => new THREE.Color(hex)
 
 const themePalette = {
   dark: {
-    fog: colorFromHex('#060c12'),
-    key: colorFromHex('#ffffff'),
-    rim: colorFromHex('#7abfff'),
-    fill: colorFromHex('#f7fbff'),
-    colorA: colorFromHex('#8c939f'),
-    colorB: colorFromHex('#d5dde7'),
-    colorC: colorFromHex('#9ec9ff'),
+    fog: colorFromHex('#0a0e14'),
+    hemiSky: colorFromHex('#f2e7d3'),
+    hemiGround: colorFromHex('#090c11'),
+    key: colorFromHex('#fff8ee'),
+    rim: colorFromHex('#cfad6d'),
+    fill: colorFromHex('#e7dbc7'),
+    colorA: colorFromHex('#7d807d'),
+    colorB: colorFromHex('#c9c2b5'),
+    colorC: colorFromHex('#b99258'),
   },
   light: {
-    fog: colorFromHex('#f7f9fc'),
-    key: colorFromHex('#f7faff'),
-    rim: colorFromHex('#c7d8ff'),
-    fill: colorFromHex('#ffffff'),
-    colorA: colorFromHex('#9aa0a8'),
-    colorB: colorFromHex('#fcfdff'),
-    colorC: colorFromHex('#b7c9f2'),
+    fog: colorFromHex('#f7f3ec'),
+    hemiSky: colorFromHex('#f7efe1'),
+    hemiGround: colorFromHex('#d6cab8'),
+    key: colorFromHex('#fffaf2'),
+    rim: colorFromHex('#c59b5d'),
+    fill: colorFromHex('#efe5d6'),
+    colorA: colorFromHex('#959188'),
+    colorB: colorFromHex('#f4eee3'),
+    colorC: colorFromHex('#c59b5d'),
   },
 }
 
@@ -111,14 +115,16 @@ const applyLightsForTheme = () => {
   scene.fog.color.copy(dark.fog.clone().lerp(light.fog, blend))
   ambientLight.intensity = mix(1.45, 1.85, blend)
   hemiLight.intensity = mix(1.12, 0.72, blend)
+  hemiLight.color.copy(tmpColor.copy(dark.hemiSky).lerp(light.hemiSky, blend))
+  hemiLight.groundColor.copy(tmpColor.copy(dark.hemiGround).lerp(light.hemiGround, blend))
 
   keyLight.color.copy(tmpColor.copy(dark.key).lerp(light.key, blend))
   rimLight.color.copy(tmpColor.copy(dark.rim).lerp(light.rim, blend))
   fillLight.color.copy(tmpColor.copy(dark.fill).lerp(light.fill, blend))
 
   keyLight.intensity = mix(2.8, 2.15, blend)
-  rimLight.intensity = mix(2.55, 1.1, blend)
-  fillLight.intensity = mix(0.92, 0.82, blend)
+  rimLight.intensity = mix(1.72, 0.92, blend)
+  fillLight.intensity = mix(0.88, 0.76, blend)
 }
 
 const applyMaterialState = () => {
@@ -127,10 +133,11 @@ const applyMaterialState = () => {
   const themeBlend = themeState.blend
   const polish = clamp01(sceneState.overview * 0.55 + sceneState.detail * 0.7 + sceneState.emotion)
   const modelOpacity = THREE.MathUtils.clamp(
-    0.62 + sceneState.overview * 0.04 + sceneState.detail * 0.08 + sceneState.emotion * 0.04,
-    0.6,
-    0.78,
+    0.26 + sceneState.overview * 0.05 + sceneState.detail * 0.08 + sceneState.emotion * 0.04,
+    0.26,
+    0.43,
   )
+
 
   const darkTarget = themePalette.dark.colorA
     .clone()
@@ -150,7 +157,7 @@ const applyMaterialState = () => {
     if ('opacity' in material) {
       material.transparent = true
       material.opacity = modelOpacity
-      material.depthWrite = modelOpacity > 0.74
+      material.depthWrite = modelOpacity > 0.38
     }
 
     if ('metalness' in material) {
@@ -233,7 +240,7 @@ const applySceneState = () => {
   // 4) 模型缩放
   // =========================
   const scaleFactor =
-    1.38 - intro * 0.48 + introArc * 0.06 + detail * 0.03 + emotion * 0.04
+    1.38 - intro * 0.48 + introArc * 0.06 + detail * 0.03 + emotion * 0.08
 
   model.scale.copy(framing.baseScale).multiplyScalar(scaleFactor)
 
@@ -328,8 +335,10 @@ onMounted(() => {
   const width = container.clientWidth || window.innerWidth
   const height = container.clientHeight || window.innerHeight
 
+  const initialPalette = props.themeMode === 'light' ? themePalette.light : themePalette.dark
+
   scene = new THREE.Scene()
-  scene.fog = new THREE.Fog(props.themeMode === 'light' ? '#f7f9fc' : '#060c12', 16, 30)
+  scene.fog = new THREE.Fog(initialPalette.fog, 16, 30)
 
   camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 1000)
 
@@ -348,10 +357,10 @@ onMounted(() => {
   controls.enableRotate = false
 
   ambientLight = new THREE.AmbientLight(0xffffff, 1.45)
-  hemiLight = new THREE.HemisphereLight('#b9d8ff', '#050a16', 1.12)
-  keyLight = new THREE.DirectionalLight('#eef6ff', 2.8)
-  rimLight = new THREE.DirectionalLight('#6d7dff', 2.55)
-  fillLight = new THREE.DirectionalLight('#7fe7ff', 0.92)
+  hemiLight = new THREE.HemisphereLight(initialPalette.hemiSky, initialPalette.hemiGround, 1.12)
+  keyLight = new THREE.DirectionalLight(initialPalette.key, 2.8)
+  rimLight = new THREE.DirectionalLight(initialPalette.rim, 1.72)
+  fillLight = new THREE.DirectionalLight(initialPalette.fill, 0.88)
 
   keyLight.position.set(8, 7, 10)
   rimLight.position.set(-9, 3, -6)

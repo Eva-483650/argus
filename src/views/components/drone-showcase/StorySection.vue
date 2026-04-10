@@ -23,11 +23,20 @@
           </div>
         </div>
       </article>
+
+      <div v-if="hasMedia" class="story-section__media">
+        <slot name="media"></slot>
+      </div>
     </div>
   </section>
 </template>
 
 <script setup>
+import { computed, useSlots } from 'vue'
+
+const slots = useSlots()
+const hasMedia = computed(() => Boolean(slots.media))
+
 defineProps({
   sectionId: {
     type: String,
@@ -105,6 +114,11 @@ defineProps({
   z-index: 1;
   display: grid;
   gap: 26px;
+}
+
+.story-section__media {
+  position: relative;
+  z-index: 1;
 }
 
 #section-launch .story-copy {
@@ -195,7 +209,7 @@ defineProps({
 .story-metric__value {
   display: block;
   font-family: var(--argus-font-display);
-  font-weight: 600;
+  font-weight: 500;
   font-size: clamp(24px, 2.4vw, 34px);
   letter-spacing: -0.04em;
   color: var(--showcase-title);
@@ -285,6 +299,37 @@ defineProps({
   padding-top: 18px;
 }
 
+.variant-demo .story-copy {
+  grid-column: 1 / span 4;
+  max-width: 420px;
+  align-self: center;
+}
+
+.variant-demo .story-copy__header {
+  flex-direction: column;
+  gap: 10px;
+  max-width: 360px;
+}
+
+.variant-demo .story-copy__caption {
+  text-align: left;
+  max-width: 360px;
+}
+
+.variant-demo .story-copy__main {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 32px;
+}
+
+.variant-demo .story-copy__body {
+  max-width: 34ch;
+}
+
+.variant-demo .story-section__media {
+  grid-column: 6 / span 7;
+  align-self: center;
+}
+
 @media (max-width: 960px) {
   .story-section {
     min-height: 118vh;
@@ -308,6 +353,11 @@ defineProps({
   .is-left .story-copy {
     grid-column: 1;
     max-width: none;
+  }
+
+  .story-section__media,
+  .variant-demo .story-section__media {
+    grid-column: 1;
   }
 
   #section-launch .story-copy {
@@ -346,5 +396,6 @@ defineProps({
     grid-template-columns: 1fr;
     gap: 14px;
   }
+
 }
 </style>

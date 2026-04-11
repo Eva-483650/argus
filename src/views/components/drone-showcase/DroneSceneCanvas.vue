@@ -133,9 +133,9 @@ const applyMaterialState = () => {
   const themeBlend = themeState.blend
   const polish = clamp01(sceneState.overview * 0.55 + sceneState.detail * 0.7 + sceneState.emotion)
   const modelOpacity = THREE.MathUtils.clamp(
-    0.26 + sceneState.overview * 0.05 + sceneState.detail * 0.08 + sceneState.emotion * 0.04,
-    0.26,
-    0.43,
+    0.55 - sceneState.overview * 0.08 - sceneState.detail * 0.04 - sceneState.emotion * 0.06,
+    0.1,
+    0.3,
   )
 
 

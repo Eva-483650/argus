@@ -33,6 +33,20 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-gsap': ['gsap', 'gsap/ScrollTrigger'],
+          'vendor-three': [
+            'three',
+            'three/examples/jsm/loaders/GLTFLoader.js',
+            'three/examples/jsm/controls/OrbitControls.js',
+          ],
+        },
+      },
+    },
+  },
   server: {
     port: 5175,
     proxy: {

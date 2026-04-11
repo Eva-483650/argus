@@ -99,10 +99,11 @@ defineProps({
   position: absolute;
   inset: 50% auto auto 0;
   transform: translateY(-50%);
+  font-family: var(--argus-font-display);
   font-size: clamp(72px, 14vw, 240px);
   line-height: 0.9;
-  letter-spacing: -0.08em;
-  text-transform: uppercase;
+  font-weight: var(--argus-weight-regular);
+  letter-spacing: var(--argus-tracking-display);
   color: var(--showcase-ghost);
   pointer-events: none;
   user-select: none;
@@ -142,10 +143,11 @@ defineProps({
 
 .story-copy__eyebrow {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--argus-type-label);
+  line-height: var(--argus-leading-label);
   font-family: var(--argus-font-body);
-  font-weight: 480;
-  letter-spacing: 0.28em;
+  font-weight: var(--argus-weight-medium);
+  letter-spacing: var(--argus-tracking-label);
   text-transform: uppercase;
   color: var(--showcase-accent-soft);
 }
@@ -153,14 +155,14 @@ defineProps({
 .story-copy__caption {
   margin: 0;
   max-width: 260px;
-  font-size: 0.6875rem;
-  line-height: 1.7;
+  font-size: var(--argus-type-meta);
+  line-height: var(--argus-leading-meta);
   font-family: var(--argus-font-body);
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-weight: var(--argus-weight-regular);
+  letter-spacing: 0;
   color: var(--showcase-caption);
   text-align: right;
+  text-wrap: pretty;
 }
 
 .story-copy__main {
@@ -176,23 +178,24 @@ defineProps({
 .story-copy__title {
   margin: 0;
   font-family: var(--argus-font-display);
-  font-weight: 480;
-  font-size: clamp(40px, 5vw, 80px);
-  line-height: 1;
-  letter-spacing: -0.045em;
+  font-weight: var(--argus-weight-regular);
+  font-size: var(--argus-type-display-xl);
+  line-height: var(--argus-leading-display-xl);
+  letter-spacing: var(--argus-tracking-display);
   color: var(--showcase-title);
   text-wrap: balance;
 }
 
 .story-copy__body {
   margin: 0;
-  max-width: 78ch;
-  font-size: 1rem;
-  line-height: 1.92;
+  max-width: 65ch;
+  font-size: var(--argus-type-body-md);
+  line-height: var(--argus-leading-body-md);
   font-family: var(--argus-font-body);
-  font-weight: 500;
+  font-weight: var(--argus-weight-regular);
   color: var(--showcase-body);
   white-space: pre-line;
+  text-wrap: pretty;
 }
 
 .story-copy__metrics {
@@ -209,9 +212,10 @@ defineProps({
 .story-metric__value {
   display: block;
   font-family: var(--argus-font-display);
-  font-weight: 500;
-  font-size: clamp(24px, 2.4vw, 34px);
-  letter-spacing: -0.04em;
+  font-weight: var(--argus-weight-regular);
+  font-size: var(--argus-type-accent-display);
+  line-height: var(--argus-leading-accent-display);
+  letter-spacing: var(--argus-tracking-accent-display);
   color: var(--showcase-title);
   font-variant-numeric: tabular-nums;
 }
@@ -219,12 +223,14 @@ defineProps({
 .story-metric__label {
   display: block;
   margin-top: 6px;
-  font-size: 0.75rem;
+  font-size: var(--argus-type-label);
+  line-height: var(--argus-leading-label);
   font-family: var(--argus-font-body);
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font-weight: var(--argus-weight-medium);
+  letter-spacing: var(--argus-tracking-label);
   text-transform: uppercase;
   color: var(--showcase-caption);
+  text-wrap: pretty;
 }
 
 .variant-hero .story-copy {
@@ -245,6 +251,16 @@ defineProps({
 
 .variant-hero .story-copy__metrics {
   width: min(520px, 100%);
+}
+
+.variant-hero .story-copy__title {
+  font-size: var(--argus-type-hero-title);
+  line-height: var(--argus-leading-hero-title);
+}
+
+.variant-hero .story-copy__body {
+  font-size: var(--argus-type-body-lg);
+  line-height: var(--argus-leading-body-lg);
 }
 
 .variant-method .story-copy {
@@ -323,6 +339,15 @@ defineProps({
 
 .variant-demo .story-copy__body {
   max-width: 34ch;
+  font-size: var(--argus-type-body-lg);
+  line-height: var(--argus-leading-body-lg);
+}
+
+.variant-demo .story-copy__title {
+  /* font-size: var(--argus-type-accent-display); */
+  font-size: var(--argus-type-display-xl);
+  line-height: var(--argus-leading-accent-display);
+  letter-spacing: var(--argus-tracking-accent-display);
 }
 
 .variant-demo .story-section__media {
@@ -376,6 +401,19 @@ defineProps({
 
   .story-copy__title {
     font-size: clamp(34px, 11vw, 56px);
+  }
+
+  .variant-hero .story-copy__title {
+    font-size: clamp(3rem, 11vw, 4.5rem);
+  }
+
+  .variant-method .story-copy__title,
+  .variant-outcome .story-copy__title {
+    font-size: clamp(2.5rem, 9vw, 3.5rem);
+  }
+
+  .variant-demo .story-copy__title {
+    font-size: clamp(2.125rem, 8vw, 3rem);
   }
 
   .story-copy__metrics {

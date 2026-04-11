@@ -1,154 +1,348 @@
 <template>
-  <main class="downloads-view" :class="`theme-${themeMode}`">
-    <section class="downloads-shell">
+  <main ref="pageRef" class="downloads-view" :class="`theme-${themeMode}`">
+    <section class="downloads-page">
       <header class="downloads-hero">
         <p class="downloads-hero__eyebrow">Resources</p>
-        <h1 class="downloads-hero__title">Downloads</h1>
-        <p class="downloads-hero__intro">
-         Argus project source code.
-        </p>
+        <div class="downloads-hero__main">
+          <h1 class="downloads-hero__title">Downloads</h1>
+          <p class="downloads-hero__intro">
+            Source access for the Argus project starts here. The goal is to move a reviewer from
+            the presentation narrative into the implementation as quickly and cleanly as possible.
+          </p>
+        </div>
       </header>
-            <a
-              class="downloads-button downloads-button--primary"
-              :href="repositoryUrl"
-              target="_blank"
-              rel="noreferrer"
-            >
-              GitHub Repository
-            </a>
 
+      <section class="downloads-access" aria-labelledby="downloads-access-title">
+        <div class="downloads-access__rail" aria-hidden="true">
+          <span class="downloads-access__index">01</span>
+        </div>
+
+        <div class="downloads-access__content">
+          <p class="downloads-access__eyebrow">Public Repository</p>
+          <h2 id="downloads-access-title" class="downloads-access__title">GitHub Repository</h2>
+          <p class="downloads-access__body">
+            Open the current Argus source base to review the frontend, the research presentation
+            flow, and the implementation details behind the public site experience.
+          </p>
+        </div>
+
+        <div class="downloads-access__actions">
+          <a
+            class="downloads-button downloads-button--primary"
+            :href="repositoryUrl"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open Repository
+          </a>
+          <p class="downloads-access__path">{{ repositoryLabel }}</p>
+        </div>
       </section>
+
+      <section class="downloads-outline" aria-label="Available materials">
+        <div v-for="item in resources" :key="item.label" class="downloads-outline__row">
+          <span class="downloads-outline__label">{{ item.label }}</span>
+          <p class="downloads-outline__value">{{ item.value }}</p>
+        </div>
+      </section>
+    </section>
   </main>
 </template>
 
 <script setup>
-import { computed, inject, ref } from 'vue'
+import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const injectedTheme = inject('argusTheme', ref(true))
 const themeMode = computed(() => (injectedTheme.value ? 'dark' : 'light'))
+const pageRef = ref(null)
+
+let context
 
 const repositoryUrl = 'https://github.com/Eva-483650/argus'
+const repositoryLabel = repositoryUrl.replace(/^https?:\/\//, '')
+
+const resources = [
+  {
+    label: 'Current public asset',
+    value: 'Project source code for the site, the research presentation flow, and the public-facing implementation.',
+  },
+  {
+    label: 'Repository scope',
+    value: 'Frontend views, theme system, and the 3D showcase logic that drives the Research page experience.',
+  },
+  {
+    label: 'Best review path',
+    value: 'Start with the Research page for narrative context, then inspect the repository for implementation details and structure.',
+  },
+]
+
+onMounted(() => {
+  if (!pageRef.value || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return
+  }
+
+  context = gsap.context(() => {
+    const hero = pageRef.value.querySelector('.downloads-hero')
+    const heroEyebrow = hero?.querySelector('.downloads-hero__eyebrow')
+    const heroTitle = hero?.querySelector('.downloads-hero__title')
+    const heroIntro = hero?.querySelector('.downloads-hero__intro')
+    const heroMain = hero?.querySelector('.downloads-hero__main')
+    const access = pageRef.value.querySelector('.downloads-access')
+    const accessRail = access?.querySelector('.downloads-access__rail')
+    const accessEyebrow = access?.querySelector('.downloads-access__eyebrow')
+    const accessTitle = access?.querySelector('.downloads-access__title')
+    const accessBody = access?.querySelector('.downloads-access__body')
+    const accessButton = access?.querySelector('.downloads-button')
+    const accessPath = access?.querySelector('.downloads-access__path')
+    const outlineRows = gsap.utils.toArray('.downloads-outline__row')
+
+    gsap
+      .timeline({
+        defaults: {
+          ease: 'power3.out',
+        },
+      })
+      .fromTo(heroEyebrow, { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.58 })
+      .fromTo(heroTitle, { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.78 }, 0.1)
+      .fromTo(heroIntro, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.72 }, 0.24)
+
+    if (heroMain) {
+      gsap.to(heroMain, {
+        yPercent: -2,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: hero,
+          start: 'top top',
+          end: 'bottom top',
+          scrub: 1.2,
+        },
+      })
+    }
+
+    if (access) {
+      gsap
+        .timeline({
+          defaults: {
+            ease: 'power3.out',
+          },
+          scrollTrigger: {
+            trigger: access,
+            start: 'top 76%',
+            toggleActions: 'play none none reverse',
+          },
+        })
+        .fromTo(accessRail, { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.54 })
+        .fromTo(
+          [accessEyebrow, accessTitle],
+          { autoAlpha: 0, y: 24 },
+          { autoAlpha: 1, y: 0, duration: 0.72, stagger: 0.1 },
+          0.12,
+        )
+        .fromTo(accessBody, { autoAlpha: 0, y: 20 }, { autoAlpha: 1, y: 0, duration: 0.64 }, 0.3)
+        .fromTo(
+          accessButton,
+          { autoAlpha: 0, y: 18 },
+          { autoAlpha: 1, y: 0, duration: 0.56 },
+          0.44,
+        )
+        .fromTo(accessPath, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.54 }, 0.58)
+    }
+
+    outlineRows.forEach((row, index) => {
+      const label = row.querySelector('.downloads-outline__label')
+      const value = row.querySelector('.downloads-outline__value')
+
+      gsap
+        .timeline({
+          defaults: {
+            ease: 'power3.out',
+          },
+          scrollTrigger: {
+            trigger: row,
+            start: 'top 84%',
+            toggleActions: 'play none none reverse',
+          },
+        })
+        .fromTo(label, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.5 }, 0)
+        .fromTo(value, { autoAlpha: 0, y: 20 }, { autoAlpha: 1, y: 0, duration: 0.62 }, 0.12)
+
+      gsap.to(row, {
+        yPercent: index % 2 === 0 ? -1.4 : -0.8,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: row,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: 1.5,
+        },
+      })
+    })
+  }, pageRef)
+})
+
+onBeforeUnmount(() => {
+  context?.revert()
+})
 </script>
 
 <style scoped>
 .downloads-view {
+  --downloads-space-xs: 0.75rem;
+  --downloads-space-sm: 1rem;
+  --downloads-space-md: 1.5rem;
+  --downloads-space-lg: 2rem;
+  --downloads-space-xl: clamp(3rem, 6vw, 5rem);
   min-height: calc(100vh - 56px);
-  padding: 40px 24px 72px;
+  padding: 40px 24px 80px;
   font-family: var(--argus-font-body);
+  font-size: var(--argus-type-body-base);
+  line-height: var(--argus-leading-body-base);
   font-kerning: normal;
 }
 
-.downloads-shell {
-  max-width: 1100px;
+.downloads-page {
+  position: relative;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 40px 34px 44px;
-  border-radius: 28px;
-  border: 1px solid var(--downloads-shell-border);
-  background:
-    linear-gradient(180deg, var(--downloads-shell-top), var(--downloads-shell-bottom)),
-    var(--downloads-shell-bg);
-  box-shadow: 0 24px 72px var(--downloads-shell-shadow);
-  backdrop-filter: blur(18px);
+}
+
+.downloads-page::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 1px;
+  margin-bottom: var(--downloads-space-xl);
+  background: linear-gradient(90deg, transparent, var(--downloads-divider), transparent);
 }
 
 .downloads-hero {
-  max-width: 760px;
-  margin-bottom: 30px;
+  display: grid;
+  gap: var(--downloads-space-md);
+  margin-bottom: clamp(2.5rem, 7vw, 5.5rem);
 }
 
 .downloads-hero__eyebrow {
-  margin: 0 0 10px;
-  font-size: 0.75rem;
-  font-family: var(--argus-font-body);
-  font-weight: 700;
-  letter-spacing: 0.28em;
+  margin: 0;
+  font-size: var(--argus-type-label);
+  line-height: var(--argus-leading-label);
+  font-weight: var(--argus-weight-medium);
+  letter-spacing: var(--argus-tracking-label);
   text-transform: uppercase;
   color: var(--downloads-eyebrow);
+}
+
+.downloads-hero__main {
+  display: grid;
+  grid-template-columns: minmax(0, 0.72fr) minmax(320px, 0.92fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: end;
 }
 
 .downloads-hero__title {
   margin: 0;
   font-family: var(--argus-font-display);
-  font-size: clamp(2.25rem, 4vw, 3.5rem);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.04em;
+  font-size: var(--argus-type-display-xl);
+  font-weight: var(--argus-weight-regular);
+  line-height: var(--argus-leading-display-xl);
+  letter-spacing: var(--argus-tracking-display);
   color: var(--downloads-title);
   text-wrap: balance;
 }
 
 .downloads-hero__intro {
-  margin: 16px 0 0;
-  font-size: 1rem;
-  font-family: var(--argus-font-body);
-  font-weight: 500;
-  line-height: 1.9;
+  max-width: 42ch;
+  margin: 0;
+  font-size: var(--argus-type-body-lg);
+  line-height: var(--argus-leading-body-lg);
   color: var(--downloads-copy);
+  text-wrap: pretty;
 }
 
-.downloads-card {
+.downloads-access {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
-  gap: 22px;
-  padding: 28px;
-  border-radius: 24px;
-  border: 1px solid var(--downloads-card-border);
-  background: var(--downloads-card-bg);
+  grid-template-columns: 72px minmax(0, 1fr) minmax(220px, 280px);
+  gap: clamp(1.25rem, 4vw, 3rem);
+  align-items: start;
+  padding: clamp(2rem, 5vw, 3.5rem) 0;
+  border-top: 1px solid var(--downloads-line);
+  border-bottom: 1px solid var(--downloads-line);
 }
 
-.downloads-card__badge {
-  display: inline-flex;
-  margin-bottom: 12px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: var(--downloads-badge-bg);
-  color: var(--downloads-badge-text);
-  font-size: 0.75rem;
-  font-family: var(--argus-font-body);
-  font-weight: 700;
-  letter-spacing: 0.18em;
+.downloads-access__rail {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 2px;
+}
+
+.downloads-access__index {
+  font-size: var(--argus-type-accent-display);
+  line-height: var(--argus-leading-accent-display);
+  font-family: var(--argus-font-display);
+  font-weight: var(--argus-weight-regular);
+  letter-spacing: var(--argus-tracking-accent-display);
+  color: var(--downloads-accent);
+}
+
+.downloads-access__content {
+  display: grid;
+  gap: 14px;
+}
+
+.downloads-access__eyebrow {
+  margin: 0;
+  font-size: var(--argus-type-label);
+  line-height: var(--argus-leading-label);
+  font-weight: var(--argus-weight-medium);
+  letter-spacing: var(--argus-tracking-label);
   text-transform: uppercase;
+  color: var(--downloads-eyebrow);
 }
 
-.downloads-card__title {
+.downloads-access__title {
   margin: 0;
   font-family: var(--argus-font-display);
-  font-size: clamp(1.8rem, 2.6vw, 2.6rem);
-  line-height: 1.02;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: var(--argus-type-accent-display);
+  font-weight: var(--argus-weight-regular);
+  line-height: var(--argus-leading-accent-display);
+  letter-spacing: var(--argus-tracking-accent-display);
   color: var(--downloads-heading);
 }
 
-.downloads-card__body {
-  margin: 16px 0 0;
-  font-size: 1rem;
-  font-family: var(--argus-font-body);
-  font-weight: 500;
-  line-height: 1.88;
+.downloads-access__body {
+  max-width: 56ch;
+  margin: 0;
+  font-size: var(--argus-type-body-base);
+  line-height: var(--argus-leading-body-base);
   color: var(--downloads-copy);
+  text-wrap: pretty;
 }
 
-.downloads-card__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 24px;
+.downloads-access__actions {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+  align-content: start;
+  will-change: transform, opacity;
 }
 
 .downloads-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
+  min-height: 46px;
   padding: 0 18px;
   border-radius: 999px;
   border: 1px solid transparent;
   text-decoration: none;
-  font-size: 0.9375rem;
-  font-family: var(--argus-font-body);
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-size: var(--argus-type-nav);
+  line-height: var(--argus-leading-nav);
+  font-weight: var(--argus-weight-medium);
+  letter-spacing: 0.02em;
   transition:
     transform 0.2s ease,
     background 0.2s ease,
@@ -161,132 +355,139 @@ const repositoryUrl = 'https://github.com/Eva-483650/argus'
   transform: translateY(-1px);
 }
 
+.downloads-button:focus-visible {
+  outline: 2px solid var(--downloads-accent);
+  outline-offset: 3px;
+}
+
 .downloads-button--primary {
   background: var(--downloads-button-bg);
   color: var(--downloads-button-text);
   box-shadow: 0 14px 30px var(--downloads-button-shadow);
 }
 
-.downloads-button--ghost {
-  border-color: var(--downloads-ghost-border);
-  background: var(--downloads-ghost-bg);
-  color: var(--downloads-ghost-text);
+.downloads-access__path {
+  margin: 0;
+  font-size: var(--argus-type-meta);
+  font-weight: var(--argus-weight-regular);
+  line-height: var(--argus-leading-meta);
+  color: var(--downloads-path);
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
-.downloads-meta {
+.downloads-outline {
   display: grid;
-  gap: 14px;
 }
 
-.downloads-meta__block {
-  padding: 18px;
-  border-radius: 18px;
-  border: 1px solid var(--downloads-meta-border);
-  background: var(--downloads-meta-bg);
+.downloads-outline__row {
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+  gap: clamp(1rem, 3vw, 2.25rem);
+  align-items: start;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--downloads-line-soft);
+  will-change: transform, opacity;
 }
 
-.downloads-meta__label {
-  display: inline-block;
-  margin-bottom: 10px;
-  font-size: 0.6875rem;
-  font-family: var(--argus-font-body);
-  font-weight: 700;
-  letter-spacing: 0.22em;
+.downloads-outline__label {
+  font-size: var(--argus-type-label);
+  line-height: var(--argus-leading-label);
+  font-weight: var(--argus-weight-medium);
+  letter-spacing: var(--argus-tracking-label);
   text-transform: uppercase;
   color: var(--downloads-meta-label);
 }
 
-.downloads-meta__value {
-  display: block;
-  font-size: 0.8125rem;
-  font-family: var(--argus-font-body);
-  font-weight: 600;
-  line-height: 1.7;
-  color: var(--downloads-heading);
-  word-break: break-all;
-}
-
-.downloads-meta__text {
+.downloads-outline__value {
+  max-width: 62ch;
   margin: 0;
-  font-size: 0.875rem;
-  font-family: var(--argus-font-body);
-  font-weight: 500;
-  line-height: 1.78;
+  font-size: var(--argus-type-body-base);
+  line-height: var(--argus-leading-body-base);
   color: var(--downloads-copy);
+  text-wrap: pretty;
 }
 
 .theme-dark {
-  --downloads-shell-bg: rgba(10, 14, 20, 0.28);
-  --downloads-shell-top: rgba(255, 255, 255, 0.06);
-  --downloads-shell-bottom: rgba(255, 255, 255, 0.015);
-  --downloads-shell-border: rgba(200, 168, 106, 0.12);
-  --downloads-shell-shadow: rgba(5, 10, 16, 0.16);
   --downloads-eyebrow: rgba(200, 168, 106, 0.82);
   --downloads-title: #f4efe5;
   --downloads-heading: #f4efe5;
   --downloads-copy: rgba(222, 219, 210, 0.82);
-  --downloads-card-border: rgba(200, 168, 106, 0.1);
-  --downloads-card-bg: rgba(255, 255, 255, 0.02);
-  --downloads-badge-bg: rgba(200, 168, 106, 0.1);
-  --downloads-badge-text: #c8a86a;
+  --downloads-divider: rgba(200, 168, 106, 0.18);
+  --downloads-line: rgba(200, 168, 106, 0.1);
+  --downloads-line-soft: rgba(200, 168, 106, 0.08);
+  --downloads-meta-label: rgba(174, 171, 164, 0.72);
+  --downloads-accent: #c8a86a;
   --downloads-button-bg: linear-gradient(135deg, #c8a86a, #b78b43);
   --downloads-button-text: #101724;
   --downloads-button-shadow: rgba(200, 168, 106, 0.18);
-  --downloads-ghost-border: rgba(200, 168, 106, 0.12);
-  --downloads-ghost-bg: rgba(255, 255, 255, 0.02);
-  --downloads-ghost-text: #f1ebdf;
-  --downloads-meta-border: rgba(200, 168, 106, 0.1);
-  --downloads-meta-bg: rgba(255, 255, 255, 0.02);
-  --downloads-meta-label: rgba(174, 171, 164, 0.72);
+  --downloads-path: rgba(210, 205, 194, 0.74);
 }
 
 .theme-light {
-  --downloads-shell-bg: rgba(255, 251, 244, 0.48);
-  --downloads-shell-top: rgba(255, 255, 255, 0.68);
-  --downloads-shell-bottom: rgba(245, 241, 234, 0.48);
-  --downloads-shell-border: rgba(183, 139, 67, 0.14);
-  --downloads-shell-shadow: rgba(94, 82, 62, 0.06);
   --downloads-eyebrow: rgba(183, 139, 67, 0.74);
   --downloads-title: #1d2430;
   --downloads-heading: #1d2430;
   --downloads-copy: rgba(56, 61, 69, 0.82);
-  --downloads-card-border: rgba(183, 139, 67, 0.14);
-  --downloads-card-bg: rgba(255, 255, 255, 0.56);
-  --downloads-badge-bg: rgba(183, 139, 67, 0.1);
-  --downloads-badge-text: #b78b43;
+  --downloads-divider: rgba(183, 139, 67, 0.18);
+  --downloads-line: rgba(183, 139, 67, 0.14);
+  --downloads-line-soft: rgba(183, 139, 67, 0.12);
+  --downloads-meta-label: rgba(98, 102, 108, 0.74);
+  --downloads-accent: #b78b43;
   --downloads-button-bg: linear-gradient(135deg, #c59b4f, #b78b43);
   --downloads-button-text: #1d2430;
   --downloads-button-shadow: rgba(183, 139, 67, 0.16);
-  --downloads-ghost-border: rgba(183, 139, 67, 0.14);
-  --downloads-ghost-bg: rgba(255, 255, 255, 0.5);
-  --downloads-ghost-text: #1d2430;
-  --downloads-meta-border: rgba(183, 139, 67, 0.14);
-  --downloads-meta-bg: rgba(255, 255, 255, 0.48);
-  --downloads-meta-label: rgba(98, 102, 108, 0.74);
+  --downloads-path: rgba(88, 84, 77, 0.76);
 }
 
-@media (max-width: 860px) {
-  .downloads-card {
+@media (max-width: 980px) {
+  .downloads-hero__main {
     grid-template-columns: 1fr;
+  }
+
+  .downloads-access {
+    grid-template-columns: 56px minmax(0, 1fr);
+  }
+
+  .downloads-access__actions {
+    grid-column: 2;
   }
 }
 
 @media (max-width: 720px) {
   .downloads-view {
-    padding: 22px 16px 40px;
+    padding: 24px 16px 48px;
   }
 
-  .downloads-shell {
-    padding: 28px 20px 30px;
-    border-radius: 22px;
+  .downloads-page::before {
+    margin-bottom: 2.5rem;
   }
 
-  .downloads-card {
-    padding: 20px;
+  .downloads-access {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 28px 0;
   }
 
-  .downloads-card__title {
-    font-size: 24px;
+  .downloads-access__rail {
+    justify-content: flex-start;
+  }
+
+  .downloads-access__actions {
+    grid-column: auto;
+  }
+
+  .downloads-outline__row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 18px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .downloads-access__actions,
+  .downloads-outline__row {
+    will-change: auto;
   }
 }
 </style>

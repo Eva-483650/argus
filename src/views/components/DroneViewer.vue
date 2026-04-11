@@ -67,13 +67,18 @@
 </template>
 
 <script setup>
-import { computed, inject, onBeforeUnmount, ref } from 'vue'
+import { computed, defineAsyncComponent, inject, onBeforeUnmount, ref } from 'vue'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import DroneSceneCanvas from './drone-showcase/DroneSceneCanvas.vue'
 import StorySection from './drone-showcase/StorySection.vue'
 
 gsap.registerPlugin(ScrollTrigger)
+
+const DroneSceneCanvas = defineAsyncComponent({
+  loader: () => import('./drone-showcase/DroneSceneCanvas.vue'),
+  delay: 0,
+  suspensible: false,
+})
 
 const injectedTheme = inject('argusTheme', ref(true))
 const themeMode = computed(() => (injectedTheme.value ? 'dark' : 'light'))
@@ -178,26 +183,109 @@ const setupExperience = ({ sceneState, handleResize, playIntro }) => {
 
   context = gsap.context(() => {
     const page = pageRef.value
-    const scrollHint = pageRef.value.querySelector('.showcase-scroll-hint')
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const scrollHint = page.querySelector('.showcase-scroll-hint')
     const sectionNodes = gsap.utils.toArray(page.querySelectorAll('.story-section'))
-    const copies = gsap.utils.toArray(page.querySelectorAll('.story-copy'))
-    const backgroundWords = gsap.utils.toArray(page.querySelectorAll('.story-section__background'))
-    const demoFrame = page.querySelector('.demo-video-frame')
-    const launchSection = document.getElementById('section-launch')
-    const launchCopy = launchSection?.querySelector('.story-copy')
-    const launchBackground = launchSection?.querySelector('.story-section__background')
+    const orbA = page.querySelector('.drone-showcase__orb--a')
+    const orbB = page.querySelector('.drone-showcase__orb--b')
+    const mesh = page.querySelector('.drone-showcase__mesh')
+    const getSectionParts = (section) => ({
+      section,
+      background: section.querySelector('.story-section__background'),
+      eyebrow: section.querySelector('.story-copy__eyebrow'),
+      caption: section.querySelector('.story-copy__caption'),
+      title: section.querySelector('.story-copy__title'),
+      body: section.querySelector('.story-copy__body'),
+      metrics: section.querySelector('.story-copy__metrics'),
+      frame: section.querySelector('.demo-video-frame'),
+    })
+    const sectionParts = sectionNodes.map(getSectionParts)
+    const launchParts = sectionParts.find(({ section }) => section.id === 'section-launch')
+    const sceneIntro = playIntro()
 
-    gsap.set([scrollHint], { autoAlpha: 0, y: 24 })
-    gsap.set(copies, { autoAlpha: 0, y: 72 })
-    gsap.set(backgroundWords, { autoAlpha: 0, yPercent: 14 })
-    gsap.set(demoFrame, { autoAlpha: 0, y: 88, scale: 0.975, transformOrigin: 'center center' })
+    if (prefersReducedMotion) {
+      sceneIntro.progress(1)
+      gsap.set(scrollHint, { autoAlpha: 1, y: 0 })
 
-    gsap
-      .timeline({ defaults: { ease: 'power3.out' } })
-      .add(playIntro(), 0)
-      .to(launchCopy, { autoAlpha: 1, y: 0, duration: 1.05 }, 2.7)
-      .to(launchBackground, { autoAlpha: 0.72, yPercent: 0, duration: 1.15 }, 2.8)
-      .to(scrollHint, { autoAlpha: 1, y: 0, duration: 2.6 }, 1.05)
+      sectionParts.forEach(({ background, eyebrow, caption, title, body, metrics, frame }) => {
+        gsap.set([background, eyebrow, caption, title, body, metrics, frame].filter(Boolean), {
+          autoAlpha: 1,
+          y: 0,
+          yPercent: 0,
+          scale: 1,
+          clearProps: 'transform',
+        })
+      })
+    } else {
+      gsap.set(scrollHint, { autoAlpha: 0, y: 24 })
+
+      sectionParts.forEach(({ section, background, eyebrow, caption, title, body, metrics, frame }) => {
+        if (section.id === 'section-launch') {
+          gsap.set([eyebrow, caption, title, body, metrics, frame].filter(Boolean), {
+            autoAlpha: 1,
+            y: 0,
+            scale: 1,
+            clearProps: 'transform',
+          })
+          gsap.set(background, { autoAlpha: 0.68, yPercent: 0 })
+          return
+        }
+
+        gsap.set([eyebrow, caption].filter(Boolean), { autoAlpha: 0, y: 18 })
+        gsap.set(title, { autoAlpha: 0, y: 34 })
+        gsap.set([body, metrics].filter(Boolean), { autoAlpha: 0, y: 24 })
+        gsap.set(background, { autoAlpha: 0, yPercent: 12 })
+        gsap.set(frame, { autoAlpha: 0, y: 40, scale: 0.985, transformOrigin: 'center center' })
+      })
+
+      if (launchParts) {
+        gsap
+          .timeline({ defaults: { ease: 'power3.out' } })
+          .add(sceneIntro, 0)
+          .to(scrollHint, { autoAlpha: 1, y: 0, duration: 1.8 }, 1.05)
+      }
+
+      if (orbA) {
+        gsap.to(orbA, {
+          xPercent: 2,
+          yPercent: -6,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: page,
+            start: 'top top',
+            end: 'bottom bottom',
+            scrub: 1.5,
+          },
+        })
+      }
+
+      if (orbB) {
+        gsap.to(orbB, {
+          xPercent: -2,
+          yPercent: 5,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: page,
+            start: 'top top',
+            end: 'bottom bottom',
+            scrub: 1.65,
+          },
+        })
+      }
+
+      if (mesh) {
+        gsap.to(mesh, {
+          yPercent: -3,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: page,
+            start: 'top top',
+            end: 'bottom bottom',
+            scrub: 1.8,
+          },
+        })
+      }
+    }
 
     const overviewSection = document.getElementById('section-launch')
     const detailSection = document.getElementById('section-detail')
@@ -260,181 +348,75 @@ const setupExperience = ({ sceneState, handleResize, playIntro }) => {
       })
     })
 
-    sectionNodes.forEach((section) => {
-      const copy = section.querySelector('.story-copy')
-      const background = section.querySelector('.story-section__background')
-      const frame = section.querySelector('.demo-video-frame')
-      const isDetailSection = section.id === 'section-detail'
-      const isDemoSection = section.id === demoAct.id
-
-      if (section.id === 'section-launch') {
+    sectionParts.forEach(({ section, background, eyebrow, caption, title, body, metrics, frame }) => {
+      if (section.id === 'section-launch' || prefersReducedMotion) {
         return
       }
 
-      if (isDemoSection) {
-        const demoTimeline = gsap.timeline({
-          scrollTrigger: {
-            trigger: section,
-            start: 'top 74%',
-            end: 'bottom 28%',
-            scrub: 0.72,
-          },
-        })
-
-        if (copy) {
-          demoTimeline
-            .fromTo(
-              copy,
-              { autoAlpha: 0, y: 88 },
-              { autoAlpha: 1, y: 0, ease: 'power2.out', duration: 0.42 },
-              0,
-            )
-            .to(copy, {
-              autoAlpha: 1,
-              y: 0,
-              ease: 'none',
-              duration: 0.34,
-            })
-        }
-
-        if (frame) {
-          demoTimeline
-            .fromTo(
-              frame,
-              { autoAlpha: 0, y: 88, scale: 0.975 },
-              { autoAlpha: 1, y: 0, scale: 1, ease: 'power2.out', duration: 0.46 },
-              0.08,
-            )
-            .to(frame, {
-              autoAlpha: 1,
-              y: 0,
-              scale: 1,
-              ease: 'none',
-              duration: 0.38,
-            })
-        }
-      } else if (copy) {
-        if (isDetailSection) {
-          gsap
-            .timeline({
-              scrollTrigger: {
-                trigger: section,
-                start: 'top 78%',
-                end: 'bottom 42%',
-                scrub: 0.58,
-              },
-            })
-            .fromTo(
-              copy,
-              { autoAlpha: 0, y: 96 },
-              { autoAlpha: 1, y: 0, ease: 'power2.out', duration: 0.48 },
-            )
-            .to(copy, {
-              autoAlpha: 1,
-              y: 0,
-              ease: 'none',
-              duration: 0.24,
-            })
-        } else {
-          gsap
-            .timeline({
-              scrollTrigger: {
-                trigger: section,
-                start: 'top 70%',
-                end: 'bottom 30%',
-                scrub: 0.64,
-              },
-            })
-            .fromTo(
-              copy,
-              { autoAlpha: 0, y: 72 },
-              { autoAlpha: 1, y: 0, ease: 'power2.out', duration: 0.34 },
-            )
-            .to(copy, {
-              autoAlpha: 0.18,
-              y: -36,
-              ease: 'power2.inOut',
-              duration: 0.42,
-            })
-        }
-      }
+      const revealTimeline = gsap.timeline({
+        defaults: {
+          ease: 'power3.out',
+        },
+        scrollTrigger: {
+          trigger: section,
+          start: section.id === demoAct.id ? 'top 76%' : 'top 74%',
+          toggleActions: 'play none none reverse',
+        },
+      })
 
       if (background) {
-        if (isDetailSection) {
-          gsap
-            .timeline({
-              scrollTrigger: {
-                trigger: section,
-                start: 'top 82%',
-                end: 'bottom 40%',
-                scrub: 0.6,
-              },
-            })
-            .fromTo(
-              background,
-              { autoAlpha: 0, yPercent: 18 },
-              { autoAlpha: 0.92, yPercent: 0, ease: 'power2.out', duration: 0.4 },
-            )
-            .to(background, {
-              autoAlpha: 0.38,
-              yPercent: -6,
-              ease: 'power2.inOut',
-              duration: 0.32,
-            })
-        } else if (isDemoSection) {
-          gsap
-            .timeline({
-              scrollTrigger: {
-                trigger: section,
-                start: 'top 78%',
-                end: 'bottom 28%',
-                scrub: 0.68,
-              },
-            })
-            .fromTo(
-              background,
-              { autoAlpha: 0, yPercent: 16 },
-              { autoAlpha: 0.84, yPercent: 0, ease: 'power2.out', duration: 0.4 },
-            )
-            .to(background, {
-              autoAlpha: 0.3,
-              yPercent: -8,
-              ease: 'power2.inOut',
-              duration: 0.4,
-            })
-        } else {
-          gsap
-            .timeline({
-              scrollTrigger: {
-                trigger: section,
-                start: 'top 76%',
-                end: 'bottom 32%',
-                scrub: 0.66,
-              },
-            })
-            .fromTo(
-              background,
-              { autoAlpha: 0, yPercent: 14 },
-              { autoAlpha: 0.78, yPercent: 0, ease: 'power2.out', duration: 0.36 },
-            )
-            .to(background, {
-              autoAlpha: 0.12,
-              yPercent: -10,
-              ease: 'power2.inOut',
-              duration: 0.34,
-            })
-        }
+        revealTimeline.fromTo(
+          background,
+          { autoAlpha: 0, yPercent: 12 },
+          {
+            autoAlpha: section.id === demoAct.id ? 0.78 : 0.84,
+            yPercent: 0,
+            duration: 0.72,
+          },
+          0.02,
+        )
       }
 
+      revealTimeline.fromTo(
+        [eyebrow, caption].filter(Boolean),
+        { autoAlpha: 0, y: 18 },
+        { autoAlpha: 1, y: 0, duration: 0.56, stagger: 0.08 },
+        0.06,
+      )
+
+      revealTimeline.fromTo(
+        title,
+        { autoAlpha: 0, y: 34 },
+        { autoAlpha: 1, y: 0, duration: 0.78 },
+        0.18,
+      )
+
+      revealTimeline.fromTo(
+        [body, metrics].filter(Boolean),
+        { autoAlpha: 0, y: 24 },
+        { autoAlpha: 1, y: 0, duration: 0.68, stagger: 0.12 },
+        0.32,
+      )
+
+      if (frame) {
+        revealTimeline.fromTo(
+          frame,
+          { autoAlpha: 0, y: 40, scale: 0.985 },
+          { autoAlpha: 1, y: 0, scale: 1, duration: 0.74 },
+          0.44,
+        )
+      }
     })
 
-    gsap.to('.showcase-scroll-hint__line', {
-      yPercent: 120,
-      repeat: -1,
-      duration: 1.3,
-      ease: 'power1.inOut',
-      yoyo: true,
-    })
+    if (!prefersReducedMotion) {
+      gsap.to('.showcase-scroll-hint__line', {
+        yPercent: 86,
+        repeat: -1,
+        duration: 1.45,
+        ease: 'power1.inOut',
+        yoyo: true,
+      })
+    }
 
     refreshHandler = () => handleResize()
     ScrollTrigger.addEventListener('refresh', refreshHandler)
@@ -544,6 +526,7 @@ onBeforeUnmount(() => {
   border-radius: 999px;
   filter: blur(128px);
   opacity: 0.16;
+  will-change: transform;
 }
 
 .drone-showcase__orb--a {
@@ -573,6 +556,7 @@ onBeforeUnmount(() => {
     rgba(0, 0, 0, 0.9) 82%,
     transparent
   );
+  will-change: transform;
 }
 
 .showcase-scroll-hint {
@@ -593,11 +577,13 @@ onBeforeUnmount(() => {
 }
 
 .showcase-scroll-hint__text {
-  font-size: 0.6875rem;
+  font-size: var(--argus-type-label);
+  line-height: var(--argus-leading-label);
   font-family: var(--argus-font-body);
-  font-weight: 700;
-  letter-spacing: 0.28em;
+  font-weight: var(--argus-weight-medium);
+  letter-spacing: var(--argus-tracking-label);
   text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
 }
 
 .drone-showcase__content {
@@ -616,6 +602,7 @@ onBeforeUnmount(() => {
   border-radius: 0;
   overflow: hidden;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0));
+  will-change: transform, opacity;
 }
 
 .demo-video-frame__media,
@@ -644,20 +631,22 @@ onBeforeUnmount(() => {
   padding: 8px 14px;
   border-radius: 999px;
   border: 1px solid var(--showcase-card-border);
-  font-size: 0.6875rem;
+  font-size: var(--argus-type-label);
+  line-height: var(--argus-leading-label);
   font-family: var(--argus-font-body);
-  font-weight: 700;
-  letter-spacing: 0.18em;
+  font-weight: var(--argus-weight-medium);
+  letter-spacing: var(--argus-tracking-label);
   text-transform: uppercase;
   color: var(--showcase-accent-soft);
 }
 
 .demo-video-frame__hint {
   margin: 0;
-  font-size: 0.9375rem;
-  line-height: 1.85;
+  font-size: var(--argus-type-body-sm);
+  line-height: var(--argus-leading-body-sm);
   font-family: var(--argus-font-body);
-  font-weight: 500;
+  font-weight: var(--argus-weight-regular);
+  text-wrap: pretty;
 }
 
 .demo-video-frame__path {
@@ -665,10 +654,14 @@ onBeforeUnmount(() => {
   padding: 10px 14px;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.03);
-  font-size: 0.875rem;
+  font-size: var(--argus-type-meta);
+  line-height: var(--argus-leading-meta);
   font-family: var(--argus-font-body);
-  font-weight: 600;
+  font-weight: var(--argus-weight-regular);
+  letter-spacing: 0.02em;
   color: var(--showcase-title);
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 @media (max-width: 960px) {
@@ -689,6 +682,14 @@ onBeforeUnmount(() => {
   .demo-video-frame__media,
   .demo-video-frame__placeholder {
     min-height: 48vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drone-showcase__orb,
+  .drone-showcase__mesh,
+  .demo-video-frame {
+    will-change: auto;
   }
 }
 </style>

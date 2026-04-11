@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap');
+
 /* color palette from <https://github.com/vuejs/theme> */
 :root {
   --vt-c-white: #ffffff;
@@ -34,6 +36,42 @@
   --color-text: var(--vt-c-text-light-1);
 
   --section-gap: 160px;
+
+  --argus-font-display: 'Instrument Serif', Georgia, serif;
+  --argus-font-body: 'DM Sans', system-ui, sans-serif;
+  --argus-weight-regular: 400;
+  --argus-weight-medium: 500;
+
+  /* --argus-type-display-xl: clamp(3.75rem, 7.8vw, 5.75rem); */
+  /* --argus-type-hero-title: clamp(3.5rem, 7.4vw, 5.5625rem); */
+
+  /* 上述标题过大，调小后： */
+  --argus-type-display-xl: clamp(3.2rem, 6.6vw, 4.95rem);
+  --argus-type-hero-title: clamp(2.9rem, 6.1vw, 4.6rem);
+
+  --argus-type-accent-display: clamp(2rem, 3.5vw, 2.625rem);
+  --argus-type-body-lg: clamp(1.125rem, 1.8vw, 1.34375rem);
+  --argus-type-body-md: clamp(1.0625rem, 1.55vw, 1.25rem);
+  --argus-type-body-base: clamp(1rem, 1.05vw, 1.05625rem);
+  --argus-type-body-sm: 1rem;
+  --argus-type-nav: 0.875rem;
+  --argus-type-meta: 0.8125rem;
+  --argus-type-label: 0.6875rem;
+
+  --argus-leading-display-xl: 0.95;
+  --argus-leading-hero-title: 0.95;
+  --argus-leading-accent-display: 1.05;
+  --argus-leading-body-lg: 1.55;
+  --argus-leading-body-md: 1.65;
+  --argus-leading-body-base: 1.65;
+  --argus-leading-body-sm: 1.5;
+  --argus-leading-nav: 1.4;
+  --argus-leading-meta: 1.5;
+  --argus-leading-label: 1.4;
+
+  --argus-tracking-display: -0.045em;
+  --argus-tracking-accent-display: -0.03em;
+  --argus-tracking-label: 0.14em;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -65,22 +103,11 @@ body {
   transition:
     color 0.5s,
     background-color 0.5s;
-  line-height: 1.6;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    Oxygen,
-    Ubuntu,
-    Cantarell,
-    'Fira Sans',
-    'Droid Sans',
-    'Helvetica Neue',
-    sans-serif;
-  font-size: 15px;
+  line-height: var(--argus-leading-body-base);
+  font-family: var(--argus-font-body);
+  font-size: var(--argus-type-body-base);
   text-rendering: optimizeLegibility;
+  font-kerning: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

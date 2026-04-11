@@ -74,21 +74,18 @@ watch(isDark, (val) => {
 </script>
 
 <style lang="scss" scoped>
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap');
 
 .layout-container {
-  --argus-font-display: 'Sora', 'Avenir Next', 'Segoe UI', sans-serif;
-  --argus-font-body: 'Manrope', 'Segoe UI', sans-serif;
-  --argus-text-display: clamp(2.375rem, 4vw, 4.5rem);
-  --argus-text-heading: 1.25rem;
-  --argus-text-body: 1rem;
-  --argus-text-meta: 0.75rem;
+  --argus-font-display: 'Instrument Serif', Georgia, serif;
+  --argus-font-body: 'DM Sans', system-ui, sans-serif;
   position: relative;
   min-height: 100vh;
-  overflow: hidden;
+  overflow-x: hidden;
   background: var(--page-bg);
   color: var(--text-color);
   font-family: var(--argus-font-body);
+  font-size: var(--argus-type-body-base);
+  line-height: var(--argus-leading-body-base);
   font-kerning: normal;
 }
 
@@ -119,6 +116,9 @@ watch(isDark, (val) => {
 }
 
 .top-header {
+  position: sticky;
+  top: 0;
+  z-index: 4;
   height: 80px;
   padding: 0 32px;
   background: var(--nav-bg);
@@ -141,21 +141,23 @@ watch(isDark, (val) => {
 
       h1 {
         margin: 0;
-        font-size: 1.375rem;
-        font-weight: 700;
-        letter-spacing: -0.03em;
+        font-size: 2rem;
+        line-height: 1;
+        font-weight: var(--argus-weight-regular);
+        letter-spacing: -0.02em;
         color: var(--brand-title);
         font-family: var(--argus-font-display);
       }
 
       p {
         margin: 3px 0 0;
-        font-size: 0.75rem;
+        font-size: var(--argus-type-label);
+        line-height: var(--argus-leading-label);
         color: var(--brand-subtitle);
-        letter-spacing: 0.18em;
+        letter-spacing: var(--argus-tracking-label);
         text-transform: uppercase;
         font-family: var(--argus-font-body);
-        font-weight: 600;
+        font-weight: var(--argus-weight-medium);
       }
     }
   }
@@ -164,6 +166,7 @@ watch(isDark, (val) => {
     display: flex;
     align-items: center;
     gap: 16px;
+    height: 100%;
     min-width: 0;
     flex: 1;
     justify-content: flex-end;
@@ -181,32 +184,39 @@ watch(isDark, (val) => {
 .top-menu {
   flex: 1;
   min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: stretch;
   justify-content: flex-end;
   border-bottom: none !important;
   background: transparent;
 
   :deep(.el-menu),
   :deep(.el-menu--horizontal) {
+    height: 100%;
+    align-items: stretch;
     border-bottom: none !important;
     background: transparent !important;
   }
 
   :deep(.el-menu-item) {
     position: relative;
-    height: 70px;
-    line-height: 70px;
+    display: inline-flex;
+    align-items: center;
+    height: 100%;
+    line-height: normal;
     border-bottom: none !important;
     color: var(--nav-text) !important;
-    font-size: 0.9375rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
+    font-size: var(--argus-type-nav);
+    font-weight: var(--argus-weight-medium);
+    letter-spacing: 0.02em;
     padding: 0 22px;
     background: transparent !important;
     transition:
       color 0.3s ease,
       background 0.3s ease,
       transform 0.25s ease;
-    font-family: var(--argus-font-display);
+    font-family: var(--argus-font-body);
   }
 
   :deep(.el-menu-item::after) {
@@ -234,10 +244,15 @@ watch(isDark, (val) => {
     transform: translateX(-50%) scaleX(0.75);
   }
 
+  :deep(.el-menu-item:focus-visible) {
+    outline: 2px solid var(--nav-active);
+    outline-offset: -2px;
+  }
+
   :deep(.el-menu-item.is-active) {
     color: var(--nav-active) !important;
     background: var(--nav-active-bg) !important;
-    font-weight: 700;
+    font-weight: var(--argus-weight-medium);
     box-shadow: inset 0 -1px 0 var(--nav-active-line);
   }
 
@@ -259,15 +274,21 @@ watch(isDark, (val) => {
   cursor: pointer;
   transition: all 0.25s ease;
   backdrop-filter: blur(8px);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.2px;
+  font-size: var(--argus-type-nav);
+  line-height: var(--argus-leading-nav);
+  font-weight: var(--argus-weight-medium);
+  letter-spacing: 0.02em;
   font-family: var(--argus-font-body);
 
   &:hover {
     transform: translateY(-1px);
     background: var(--toggle-hover-bg);
     border-color: var(--toggle-hover-border);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--nav-active);
+    outline-offset: 2px;
   }
 
   .toggle-dot {
@@ -302,11 +323,12 @@ watch(isDark, (val) => {
   align-items: center;
   justify-content: center;
   color: var(--footer-text);
-  font-size: 0.8125rem;
+  font-size: var(--argus-type-meta);
+  line-height: var(--argus-leading-meta);
   letter-spacing: 0.06em;
   background: transparent;
   font-family: var(--argus-font-body);
-  font-weight: 500;
+  font-weight: var(--argus-weight-regular);
 }
 
 .theme-dark {
@@ -397,6 +419,7 @@ watch(isDark, (val) => {
 
     .header-actions {
       width: 100%;
+      height: auto;
       flex-direction: column;
       align-items: stretch;
       gap: 10px;
@@ -405,10 +428,18 @@ watch(isDark, (val) => {
 
   .top-menu {
     width: 100%;
+    height: auto;
     overflow-x: auto;
     flex: none;
 
+    :deep(.el-menu),
+    :deep(.el-menu--horizontal) {
+      height: auto;
+    }
+
     :deep(.el-menu-item) {
+      display: inline-flex;
+      align-items: center;
       height: 48px;
       line-height: 48px;
       padding: 0 14px;

@@ -1,53 +1,82 @@
 <template>
-  <main class="team-view" :class="`theme-${themeMode}`">
-    <section class="team-shell">
+  <main ref="pageRef" class="team-view" :class="`theme-${themeMode}`">
+    <section class="team-page">
       <header class="team-hero">
         <p class="team-hero__eyebrow">Research Group</p>
-        <h1 class="team-hero__title">Our Team</h1>
-        <div class="team-hero__divider"></div>
+        <div class="team-hero__main">
+          <h1 class="team-hero__title">Our Team</h1>
+          <p class="team-hero__intro">
+            The Argus project combines research direction, multimodal perception design, and
+            implementation support into one review-ready team narrative. This page should feel more
+            like a roster in a presentation deck than a stack of profile cards.
+          </p>
+        </div>
       </header>
 
-      <div class="team-grid">
+      <section class="team-roster" aria-label="Argus team roster">
         <article
           v-for="(member, index) in members"
           :key="member.id"
-          class="team-card"
-          :class="{ 'team-card--featured': index === members.length - 1 && members.length % 2 === 1 }"
+          :id="member.id"
+          class="team-member"
+          :class="{ 'team-member--reverse': index % 2 === 1 }"
         >
-          <div class="team-card__media">
+          <div class="team-member__rail" aria-hidden="true">
+            <span class="team-member__index">{{ member.index }}</span>
+            <span class="team-member__rail-line"></span>
+          </div>
+
+          <figure class="team-member__media">
             <img
               v-if="member.photo"
-              class="team-card__photo"
+              class="team-member__portrait"
               :src="member.photo"
               :alt="member.name"
             />
 
-            <div v-else class="team-card__photo team-card__photo--placeholder">
-              <span>Photo Slot</span>
-              <small>Replace with portrait</small>
+            <div v-else class="team-member__portrait team-member__portrait--placeholder">
+              <span class="team-member__placeholder-index">{{ member.index }}</span>
+              <small class="team-member__placeholder-note">Portrait Pending</small>
             </div>
 
-            <p class="team-card__media-caption">{{ member.imageHint }}</p>
-          </div>
+            <figcaption class="team-member__media-caption">{{ member.imageHint }}</figcaption>
+          </figure>
 
-          <div class="team-card__content">
-            <span class="team-card__index">{{ member.index }}</span>
-            <h2 class="team-card__name">{{ member.name }}</h2>
-            <p class="team-card__role">{{ member.role }}</p>
-            <div class="team-card__line"></div>
-            <p class="team-card__bio">{{ member.bio }}</p>
+          <div class="team-member__content">
+            <p class="team-member__role">{{ member.role }}</p>
+            <h2 class="team-member__name">{{ member.name }}</h2>
+            <p class="team-member__bio">{{ member.bio }}</p>
+
+            <dl class="team-member__facts">
+              <div class="team-member__fact">
+                <dt>Focus</dt>
+                <dd>{{ member.focus }}</dd>
+              </div>
+
+              <div class="team-member__fact">
+                <dt>Context</dt>
+                <dd>{{ member.note }}</dd>
+              </div>
+            </dl>
           </div>
         </article>
-      </div>
+      </section>
     </section>
   </main>
 </template>
 
 <script setup>
-import { computed, inject, ref } from 'vue'
+import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const injectedTheme = inject('argusTheme', ref(true))
 const themeMode = computed(() => (injectedTheme.value ? 'dark' : 'light'))
+const pageRef = ref(null)
+
+let context
 
 const members = [
   {
@@ -87,236 +116,395 @@ const members = [
     note: 'Reserved for future expansion such as email, social links, or project tasks.',
   },
 ]
+
+const memberMotion = {
+  'member-01': {
+    start: 'top 82%',
+    mediaShift: 30,
+    contentShift: 24,
+    captionShift: 14,
+    parallax: -2.2,
+  },
+  'member-02': {
+    start: 'top 80%',
+    mediaShift: 26,
+    contentShift: 22,
+    captionShift: 12,
+    parallax: 2.4,
+  },
+  'member-03': {
+    start: 'top 78%',
+    mediaShift: 28,
+    contentShift: 24,
+    captionShift: 14,
+    parallax: -1.8,
+  },
+}
+
+onMounted(() => {
+  if (!pageRef.value || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return
+  }
+
+  context = gsap.context(() => {
+    const hero = pageRef.value.querySelector('.team-hero')
+    const heroEyebrow = hero?.querySelector('.team-hero__eyebrow')
+    const heroTitle = hero?.querySelector('.team-hero__title')
+    const heroIntro = hero?.querySelector('.team-hero__intro')
+    const heroMain = hero?.querySelector('.team-hero__main')
+    const memberNodes = members
+      .map((member) => pageRef.value.querySelector(`#${member.id}`))
+      .filter(Boolean)
+
+    gsap
+      .timeline({
+        defaults: {
+          ease: 'power3.out',
+        },
+      })
+      .fromTo(heroEyebrow, { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.58 })
+      .fromTo(heroTitle, { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.78 }, 0.1)
+      .fromTo(heroIntro, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.72 }, 0.24)
+
+    if (heroMain) {
+      gsap.to(heroMain, {
+        yPercent: -2,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: hero,
+          start: 'top top',
+          end: 'bottom top',
+          scrub: 1.2,
+        },
+      })
+    }
+
+    memberNodes.forEach((memberNode) => {
+      const config = memberMotion[memberNode.id] ?? memberMotion['member-01']
+      const rail = memberNode.querySelector('.team-member__rail')
+      const railLine = memberNode.querySelector('.team-member__rail-line')
+      const media = memberNode.querySelector('.team-member__media')
+      const portrait = memberNode.querySelector('.team-member__portrait')
+      const mediaCaption = memberNode.querySelector('.team-member__media-caption')
+      const role = memberNode.querySelector('.team-member__role')
+      const name = memberNode.querySelector('.team-member__name')
+      const bio = memberNode.querySelector('.team-member__bio')
+      const facts = memberNode.querySelector('.team-member__facts')
+
+      gsap
+        .timeline({
+          defaults: {
+            ease: 'power3.out',
+          },
+          scrollTrigger: {
+            trigger: memberNode,
+            start: config.start,
+            toggleActions: 'play none none reverse',
+            invalidateOnRefresh: true,
+          },
+        })
+        .fromTo(rail, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.48 })
+        .fromTo(
+          railLine,
+          { scaleY: 0, transformOrigin: 'top center' },
+          { scaleY: 1, duration: 0.62 },
+          0.02,
+        )
+        .fromTo(
+          media,
+          { autoAlpha: 0, y: config.mediaShift },
+          { autoAlpha: 1, y: 0, duration: 0.68 },
+          0.08,
+        )
+        .fromTo(
+          mediaCaption,
+          { autoAlpha: 0, y: config.captionShift },
+          { autoAlpha: 1, y: 0, duration: 0.52 },
+          0.18,
+        )
+        .fromTo(
+          [role, name],
+          { autoAlpha: 0, y: config.contentShift },
+          { autoAlpha: 1, y: 0, duration: 0.66, stagger: 0.1 },
+          0.24,
+        )
+        .fromTo(
+          bio,
+          { autoAlpha: 0, y: Math.max(config.contentShift - 4, 16) },
+          { autoAlpha: 1, y: 0, duration: 0.6 },
+          0.36,
+        )
+        .fromTo(
+          facts,
+          { autoAlpha: 0, y: Math.max(config.contentShift - 6, 14) },
+          { autoAlpha: 1, y: 0, duration: 0.58 },
+          0.48,
+        )
+
+      if (portrait) {
+        gsap.to(portrait, {
+          yPercent: config.parallax,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: memberNode,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 1.35,
+            invalidateOnRefresh: true,
+          },
+        })
+      }
+    })
+  }, pageRef)
+})
+
+onBeforeUnmount(() => {
+  context?.revert()
+})
 </script>
 
 <style scoped>
 .team-view {
+  --team-space-xs: 0.75rem;
+  --team-space-sm: 1rem;
+  --team-space-md: 1.5rem;
+  --team-space-lg: 2rem;
+  --team-space-xl: clamp(3rem, 6vw, 5rem);
   min-height: calc(100vh - 56px);
-  padding: 40px 24px 72px;
+  padding: 40px 24px 80px;
   font-family: var(--argus-font-body);
+  font-size: var(--argus-type-body-base);
+  line-height: var(--argus-leading-body-base);
   font-kerning: normal;
 }
 
-.team-shell {
-  max-width: 1180px;
+.team-page {
+  position: relative;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 40px 34px 48px;
-  border-radius: 28px;
-  border: 1px solid var(--team-shell-border);
-  background:
-    linear-gradient(180deg, var(--team-shell-top), var(--team-shell-bottom)),
-    var(--team-shell-bg);
-  box-shadow: 0 24px 80px var(--team-shell-shadow);
-  backdrop-filter: blur(18px);
+}
+
+.team-page::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 1px;
+  margin-bottom: var(--team-space-xl);
+  background: linear-gradient(90deg, transparent, var(--team-divider), transparent);
 }
 
 .team-hero {
-  text-align: center;
-  margin-bottom: 34px;
+  display: grid;
+  gap: var(--team-space-md);
+  margin-bottom: clamp(2.5rem, 7vw, 6rem);
 }
 
 .team-hero__eyebrow {
-  margin: 0 0 10px;
-  font-size: 0.75rem;
+  margin: 0;
+  font-size: var(--argus-type-label);
+  line-height: var(--argus-leading-label);
   font-family: var(--argus-font-body);
-  font-weight: 700;
-  letter-spacing: 0.32em;
+  font-weight: var(--argus-weight-medium);
+  letter-spacing: var(--argus-tracking-label);
   text-transform: uppercase;
   color: var(--team-eyebrow);
+}
+
+.team-hero__main {
+  display: grid;
+  grid-template-columns: minmax(0, 0.72fr) minmax(320px, 0.92fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: end;
 }
 
 .team-hero__title {
   margin: 0;
   font-family: var(--argus-font-display);
-  font-size: clamp(2.25rem, 4vw, 3.75rem);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.04em;
+  font-size: var(--argus-type-display-xl);
+  font-weight: var(--argus-weight-regular);
+  line-height: var(--argus-leading-display-xl);
+  letter-spacing: var(--argus-tracking-display);
   color: var(--team-title);
   text-wrap: balance;
 }
 
-.team-hero__divider {
-  width: 100%;
-  height: 1px;
-  margin: 24px 0 18px;
-  background: linear-gradient(90deg, transparent, var(--team-divider), transparent);
-}
-
 .team-hero__intro {
-  max-width: 880px;
-  margin: 0 auto;
-  font-size: 16px;
-  line-height: 1.8;
+  max-width: 42ch;
+  margin: 0;
+  font-size: var(--argus-type-body-lg);
+  line-height: var(--argus-leading-body-lg);
   color: var(--team-copy);
+  text-wrap: pretty;
 }
 
-.team-grid {
+.team-roster {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 28px;
 }
 
-.team-card {
+.team-member {
   display: grid;
-  grid-template-columns: 148px minmax(0, 1fr);
-  gap: 24px;
-  padding: 28px 8px 0;
-  border-top: 1px solid var(--team-card-line);
+  grid-template-columns: 72px minmax(180px, 240px) minmax(0, 1fr);
+  grid-template-areas: 'rail media content';
+  gap: clamp(1.25rem, 4vw, 3rem);
+  align-items: start;
+  padding: clamp(2rem, 6vw, 4.5rem) 0;
+  border-top: 1px solid var(--team-member-line);
 }
 
-.team-card--featured {
-  grid-column: 1 / -1;
-  max-width: 760px;
-  justify-self: center;
+.team-member--reverse {
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 240px) 72px;
+  grid-template-areas: 'content media rail';
 }
 
-.team-card__media {
+.team-member__rail {
+  grid-area: rail;
   display: flex;
   flex-direction: column;
-  gap: 14px;
   align-items: center;
+  gap: 18px;
+  padding-top: 4px;
 }
 
-.team-card__photo {
-  width: 132px;
-  height: 132px;
-  border-radius: 50%;
+.team-member__index {
+  font-size: var(--argus-type-accent-display);
+  line-height: var(--argus-leading-accent-display);
+  font-family: var(--argus-font-display);
+  font-weight: var(--argus-weight-regular);
+  letter-spacing: var(--argus-tracking-accent-display);
+  color: var(--team-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.team-member__rail-line {
+  width: 1px;
+  min-height: 132px;
+  background: linear-gradient(180deg, var(--team-divider), transparent);
+}
+
+.team-member__media {
+  grid-area: media;
+  margin: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.team-member__portrait {
+  width: min(100%, 220px);
+  aspect-ratio: 4 / 5;
+  border-radius: 26px;
   object-fit: cover;
   border: 1px solid var(--team-photo-border);
-  box-shadow: 0 18px 34px var(--team-photo-shadow);
+  box-shadow: 0 20px 44px var(--team-photo-shadow);
+  will-change: transform;
 }
 
-.team-card__photo--placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+.team-member__portrait--placeholder {
+  display: grid;
+  place-content: center;
+  gap: 10px;
   background:
-    radial-gradient(circle at top, var(--team-photo-glow), transparent 70%),
+    radial-gradient(circle at top, var(--team-photo-glow), transparent 68%),
     linear-gradient(180deg, var(--team-photo-top), var(--team-photo-bottom));
   color: var(--team-photo-text);
-  text-align: center;
 }
 
-.team-card__photo--placeholder span {
-  font-size: 1rem;
+.team-member__placeholder-index {
   font-family: var(--argus-font-display);
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: var(--argus-type-accent-display);
+  line-height: var(--argus-leading-accent-display);
+  letter-spacing: var(--argus-tracking-accent-display);
 }
 
-.team-card__photo--placeholder small {
-  width: 86px;
-  font-size: 0.75rem;
+.team-member__placeholder-note {
+  font-size: var(--argus-type-label);
+  line-height: var(--argus-leading-label);
   font-family: var(--argus-font-body);
-  font-weight: 600;
-  line-height: 1.45;
+  font-weight: var(--argus-weight-medium);
+  letter-spacing: var(--argus-tracking-label);
+  text-transform: uppercase;
   color: var(--team-photo-subtext);
 }
 
-.team-card__media-caption {
+.team-member__media-caption {
+  max-width: 26ch;
   margin: 0;
-  text-align: center;
-  font-size: 0.75rem;
-  font-family: var(--argus-font-body);
-  font-weight: 500;
-  line-height: 1.6;
+  font-size: var(--argus-type-meta);
+  line-height: var(--argus-leading-meta);
   color: var(--team-muted);
+  text-wrap: pretty;
 }
 
-.team-card__content {
+.team-member__content {
+  grid-area: content;
   min-width: 0;
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  will-change: transform, opacity;
 }
 
-.team-card__index {
-  display: inline-flex;
-  margin-bottom: 10px;
-  font-size: 0.75rem;
-  font-family: var(--argus-font-body);
-  font-weight: 700;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--team-accent);
-}
-
-.team-card__name {
+.team-member__role {
   margin: 0;
-  font-family: var(--argus-font-display);
-  font-size: clamp(1.75rem, 2.4vw, 2.4rem);
-  line-height: 1;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--team-name);
-}
-
-.team-card__role {
-  margin: 8px 0 0;
-  font-size: 0.9375rem;
-  font-family: var(--argus-font-body);
-  font-weight: 600;
-  line-height: 1.6;
+  font-size: var(--argus-type-label);
+  line-height: var(--argus-leading-label);
+  font-weight: var(--argus-weight-medium);
+  letter-spacing: var(--argus-tracking-label);
+  text-transform: uppercase;
   color: var(--team-role);
 }
 
-.team-card__line {
-  width: 96px;
-  height: 2px;
-  margin: 18px 0 18px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--team-accent), transparent);
-}
-
-.team-card__bio {
+.team-member__name {
   margin: 0;
-  font-size: 1rem;
-  font-family: var(--argus-font-body);
-  font-weight: 500;
-  line-height: 1.9;
-  color: var(--team-copy);
+  font-family: var(--argus-font-display);
+  font-size: var(--argus-type-accent-display);
+  line-height: var(--argus-leading-accent-display);
+  font-weight: var(--argus-weight-regular);
+  letter-spacing: var(--argus-tracking-accent-display);
+  color: var(--team-name);
 }
 
-.team-card__details {
+.team-member__bio {
+  max-width: 62ch;
+  margin: 0;
+  font-size: var(--argus-type-body-base);
+  line-height: var(--argus-leading-body-base);
+  color: var(--team-copy);
+  text-wrap: pretty;
+}
+
+.team-member__facts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 20px;
+  gap: 18px;
+  margin: 8px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--team-fact-line);
 }
 
-.team-card__detail {
-  padding: 14px 16px;
-  border: 1px solid var(--team-detail-border);
-  border-radius: 16px;
-  background: var(--team-detail-bg);
+.team-member__fact {
+  display: grid;
+  gap: 8px;
 }
 
-.team-card__detail-label {
-  display: inline-block;
-  margin-bottom: 8px;
-  font-size: 0.6875rem;
-  font-family: var(--argus-font-body);
-  font-weight: 700;
-  letter-spacing: 0.22em;
+.team-member__fact dt {
+  margin: 0;
+  font-size: var(--argus-type-label);
+  line-height: var(--argus-leading-label);
+  font-weight: var(--argus-weight-medium);
+  letter-spacing: var(--argus-tracking-label);
   text-transform: uppercase;
   color: var(--team-muted);
 }
 
-.team-card__detail p {
+.team-member__fact dd {
   margin: 0;
-  font-size: 0.875rem;
-  font-family: var(--argus-font-body);
-  font-weight: 500;
-  line-height: 1.7;
+  font-size: var(--argus-type-body-sm);
+  line-height: var(--argus-leading-body-sm);
   color: var(--team-copy);
+  text-wrap: pretty;
 }
 
 .theme-dark {
-  --team-shell-bg: rgba(10, 14, 20, 0.28);
-  --team-shell-top: rgba(255, 255, 255, 0.06);
-  --team-shell-bottom: rgba(255, 255, 255, 0.015);
-  --team-shell-border: rgba(200, 168, 106, 0.12);
-  --team-shell-shadow: rgba(5, 10, 16, 0.16);
   --team-title: #f4efe5;
   --team-name: #f4efe5;
   --team-eyebrow: rgba(200, 168, 106, 0.78);
@@ -324,7 +512,8 @@ const members = [
   --team-role: rgba(210, 205, 194, 0.78);
   --team-muted: rgba(174, 171, 164, 0.72);
   --team-divider: rgba(200, 168, 106, 0.18);
-  --team-card-line: rgba(200, 168, 106, 0.1);
+  --team-member-line: rgba(200, 168, 106, 0.1);
+  --team-fact-line: rgba(200, 168, 106, 0.08);
   --team-accent: #c8a86a;
   --team-photo-border: rgba(200, 168, 106, 0.12);
   --team-photo-shadow: rgba(5, 10, 16, 0.18);
@@ -333,16 +522,9 @@ const members = [
   --team-photo-glow: rgba(200, 168, 106, 0.14);
   --team-photo-text: #f1ebdf;
   --team-photo-subtext: rgba(210, 205, 194, 0.68);
-  --team-detail-border: rgba(200, 168, 106, 0.1);
-  --team-detail-bg: rgba(255, 255, 255, 0.02);
 }
 
 .theme-light {
-  --team-shell-bg: rgba(255, 251, 244, 0.48);
-  --team-shell-top: rgba(255, 255, 255, 0.68);
-  --team-shell-bottom: rgba(245, 241, 234, 0.48);
-  --team-shell-border: rgba(183, 139, 67, 0.14);
-  --team-shell-shadow: rgba(94, 82, 62, 0.06);
   --team-title: #1d2430;
   --team-name: #1d2430;
   --team-eyebrow: rgba(183, 139, 67, 0.74);
@@ -350,7 +532,8 @@ const members = [
   --team-role: rgba(88, 84, 77, 0.84);
   --team-muted: rgba(98, 102, 108, 0.74);
   --team-divider: rgba(183, 139, 67, 0.18);
-  --team-card-line: rgba(183, 139, 67, 0.16);
+  --team-member-line: rgba(183, 139, 67, 0.14);
+  --team-fact-line: rgba(183, 139, 67, 0.12);
   --team-accent: #b78b43;
   --team-photo-border: rgba(183, 139, 67, 0.14);
   --team-photo-shadow: rgba(94, 82, 62, 0.08);
@@ -359,58 +542,64 @@ const members = [
   --team-photo-glow: rgba(183, 139, 67, 0.12);
   --team-photo-text: #1d2430;
   --team-photo-subtext: rgba(88, 84, 77, 0.72);
-  --team-detail-border: rgba(183, 139, 67, 0.14);
-  --team-detail-bg: rgba(255, 255, 255, 0.56);
 }
 
-@media (max-width: 1080px) {
-  .team-grid {
+@media (max-width: 980px) {
+  .team-hero__main {
     grid-template-columns: 1fr;
   }
 
-  .team-card--featured {
-    grid-column: auto;
-    max-width: none;
+  .team-member,
+  .team-member--reverse {
+    grid-template-columns: 56px minmax(180px, 220px) minmax(0, 1fr);
+    grid-template-areas: 'rail media content';
   }
 }
 
 @media (max-width: 720px) {
   .team-view {
-    padding: 22px 16px 40px;
+    padding: 24px 16px 48px;
   }
 
-  .team-shell {
-    padding: 28px 20px 30px;
-    border-radius: 22px;
+  .team-page::before {
+    margin-bottom: 2.5rem;
   }
 
-  .team-hero {
-    margin-bottom: 28px;
-  }
-
-  .team-hero__intro {
-    font-size: 15px;
-  }
-
-  .team-card {
+  .team-member,
+  .team-member--reverse {
     grid-template-columns: 1fr;
-    padding: 22px 0 0;
+    grid-template-areas:
+      'rail'
+      'media'
+      'content';
+    gap: 18px;
+    padding: 30px 0;
   }
 
-  .team-card__media {
-    align-items: flex-start;
+  .team-member__rail {
+    flex-direction: row;
+    align-items: center;
   }
 
-  .team-card__media-caption {
-    text-align: left;
+  .team-member__rail-line {
+    min-height: 1px;
+    width: 100%;
+    background: linear-gradient(90deg, var(--team-divider), transparent);
   }
 
-  .team-card__name {
-    font-size: 26px;
+  .team-member__portrait {
+    width: min(100%, 200px);
   }
 
-  .team-card__details {
+  .team-member__facts {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .team-member__portrait,
+  .team-member__content {
+    will-change: auto;
   }
 }
 </style>

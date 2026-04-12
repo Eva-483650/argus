@@ -8,22 +8,22 @@
         <div class="brand-section">
           <div class="brand-text">
             <h1>Argus</h1>
-            <p>Multimodal Small Object Detection for All-Weather Traffic Scenarios</p>
+            <p>全天候交通场景多模态小目标检测</p>
           </div>
         </div>
 
         <div class="header-actions">
           <el-menu class="top-menu" mode="horizontal" :default-active="$route.path":ellipsis="false" router>
-            <el-menu-item index="/research">Research</el-menu-item>
-            <el-menu-item index="/project">Project</el-menu-item>
-            <el-menu-item index="/team">Team</el-menu-item>
-            <el-menu-item index="/downloads">Downloads</el-menu-item>
-            <!-- <el-menu-item index="/contact">Contact</el-menu-item> -->
+            <el-menu-item index="/research">研究展示</el-menu-item>
+            <el-menu-item index="/project">项目介绍</el-menu-item>
+            <el-menu-item index="/team">团队成员</el-menu-item>
+            <el-menu-item index="/downloads">资料下载</el-menu-item>
+            <!-- <el-menu-item index="/contact">联系我们</el-menu-item> -->
           </el-menu>
 
           <button class="theme-toggle" @click="toggleTheme">
             <span class="toggle-dot"></span>
-            <span>{{ isDark ? 'Dark' : 'Light' }}</span>
+            <span>{{ isDark ? '深色' : '浅色' }}</span>
           </button>
         </div>
       </el-header>

@@ -2,12 +2,11 @@
   <main ref="pageRef" class="downloads-view" :class="`theme-${themeMode}`">
     <section class="downloads-page">
       <header class="downloads-hero">
-        <p class="downloads-hero__eyebrow">Resources</p>
+        <p class="downloads-hero__eyebrow">项目资源</p>
         <div class="downloads-hero__main">
-          <h1 class="downloads-hero__title">Downloads</h1>
+          <h1 class="downloads-hero__title">资料下载</h1>
           <p class="downloads-hero__intro">
-            Source access for the Argus project starts here. The goal is to move a reviewer from
-            the presentation narrative into the implementation as quickly and cleanly as possible.
+            这里提供 Argus 项目的源码访问入口，目的是让评审能够从展示叙事快速过渡到实际实现，尽量高效地查看项目结构与技术细节。
           </p>
         </div>
       </header>
@@ -18,11 +17,10 @@
         </div>
 
         <div class="downloads-access__content">
-          <p class="downloads-access__eyebrow">Public Repository</p>
-          <h2 id="downloads-access-title" class="downloads-access__title">GitHub Repository</h2>
+          <p class="downloads-access__eyebrow">公开仓库</p>
+          <h2 id="downloads-access-title" class="downloads-access__title">GitHub 源码仓库</h2>
           <p class="downloads-access__body">
-            Open the current Argus source base to review the frontend, the research presentation
-            flow, and the implementation details behind the public site experience.
+            打开当前 Argus 源码仓库，即可查看前端界面、研究展示流程，以及公开站点背后的具体实现细节。
           </p>
         </div>
 
@@ -33,13 +31,13 @@
             target="_blank"
             rel="noreferrer"
           >
-            Open Repository
+            打开仓库
           </a>
           <p class="downloads-access__path">{{ repositoryLabel }}</p>
         </div>
       </section>
 
-      <section class="downloads-outline" aria-label="Available materials">
+      <section class="downloads-outline" aria-label="可查看资料">
         <div v-for="item in resources" :key="item.label" class="downloads-outline__row">
           <span class="downloads-outline__label">{{ item.label }}</span>
           <p class="downloads-outline__value">{{ item.value }}</p>
@@ -67,16 +65,16 @@ const repositoryLabel = repositoryUrl.replace(/^https?:\/\//, '')
 
 const resources = [
   {
-    label: 'Current public asset',
-    value: 'Project source code for the site, the research presentation flow, and the public-facing implementation.',
+    label: '当前公开内容',
+    value: '包含站点源码、研究展示流程以及公开页面对应的实现代码。',
   },
   {
-    label: 'Repository scope',
-    value: 'Frontend views, theme system, and the 3D showcase logic that drives the Research page experience.',
+    label: '仓库范围',
+    value: '涵盖前端视图、主题系统，以及驱动研究展示页体验的 3D 展示逻辑。',
   },
   {
-    label: 'Best review path',
-    value: 'Start with the Research page for narrative context, then inspect the repository for implementation details and structure.',
+    label: '建议查看路径',
+    value: '建议先从研究展示页了解叙事背景，再进入仓库查看实现细节与代码结构。',
   },
 ]
 

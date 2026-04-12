@@ -13,25 +13,25 @@ const routes = [
         path: 'research',
         name: 'Research',
         component: () => import('@/views/ResearchView.vue'),
-        meta: { title: 'Research' }
+        meta: { title: '研究展示' }
       },
       {
         path: 'team',
         name: 'Team',
         component: () => import('@/views/TeamView.vue'),
-        meta: { title: 'Team' }
+        meta: { title: '团队成员' }
       },
       {
         path: 'project',
         name: 'Project',
         component: () => import('@/views/ProjectView.vue'),
-        meta: { title: 'Project' }
+        meta: { title: '项目介绍' }
       },
       {
         path: 'downloads',
         name: 'Downloads',
         component: () => import('@/views/DownloadsView.vue'),
-        meta: { title: 'Downloads' }
+        meta: { title: '资料下载' }
       },
       // {
       //   path: 'contact',
@@ -54,7 +54,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  document.title = to.meta.title ? `${to.meta.title} | Housing Research Lab` : 'Housing Research Lab'
+  document.title = to.meta.title ? `${to.meta.title} | Argus` : 'Argus'
   next()
 })
 

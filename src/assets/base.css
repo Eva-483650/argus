@@ -58,8 +58,10 @@
   --argus-type-meta: 0.8125rem;
   --argus-type-label: 0.6875rem;
 
-  --argus-leading-display-xl: 0.95;
-  --argus-leading-hero-title: 0.95;
+  /* --argus-leading-display-xl: 0.95; */
+  --argus-leading-display-xl: 1.06;
+  /* --argus-leading-hero-title: 0.95; */
+  --argus-leading-hero-title: 1.08;
   --argus-leading-accent-display: 1.05;
   --argus-leading-body-lg: 1.55;
   --argus-leading-body-md: 1.65;
@@ -69,7 +71,8 @@
   --argus-leading-meta: 1.5;
   --argus-leading-label: 1.4;
 
-  --argus-tracking-display: -0.045em;
+  /* --argus-tracking-display: -0.045em; */
+  --argus-tracking-display: 0;
   --argus-tracking-accent-display: -0.03em;
   --argus-tracking-label: 0.14em;
 }

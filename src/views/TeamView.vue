@@ -2,18 +2,16 @@
   <main ref="pageRef" class="team-view" :class="`theme-${themeMode}`">
     <section class="team-page">
       <header class="team-hero">
-        <p class="team-hero__eyebrow">Research Group</p>
+        <p class="team-hero__eyebrow">研究团队</p>
         <div class="team-hero__main">
-          <h1 class="team-hero__title">Our Team</h1>
+          <h1 class="team-hero__title">团队成员</h1>
           <p class="team-hero__intro">
-            The Argus project combines research direction, multimodal perception design, and
-            implementation support into one review-ready team narrative. This page should feel more
-            like a roster in a presentation deck than a stack of profile cards.
+            Argus 项目将研究方向、多模态感知方案设计与系统实现支持整合为一支可供评审快速理解的团队。这个页面更像答辩展示中的人员编组，而不是普通的个人资料卡片列表。
           </p>
         </div>
       </header>
 
-      <section class="team-roster" aria-label="Argus team roster">
+      <section class="team-roster" aria-label="Argus 团队列表">
         <article
           v-for="(member, index) in members"
           :key="member.id"
@@ -36,7 +34,7 @@
 
             <div v-else class="team-member__portrait team-member__portrait--placeholder">
               <span class="team-member__placeholder-index">{{ member.index }}</span>
-              <small class="team-member__placeholder-note">Portrait Pending</small>
+              <small class="team-member__placeholder-note">照片待补充</small>
             </div>
 
             <figcaption class="team-member__media-caption">{{ member.imageHint }}</figcaption>
@@ -49,12 +47,12 @@
 
             <dl class="team-member__facts">
               <div class="team-member__fact">
-                <dt>Focus</dt>
+                <dt>研究重点</dt>
                 <dd>{{ member.focus }}</dd>
               </div>
 
               <div class="team-member__fact">
-                <dt>Context</dt>
+                <dt>补充说明</dt>
                 <dd>{{ member.note }}</dd>
               </div>
             </dl>
@@ -82,38 +80,38 @@ const members = [
   {
     id: 'member-01',
     index: '01',
-    name: 'Member One',
-    role: 'Principal Investigator / Team Lead',
+    name: '成员一',
+    role: '项目负责人 / 团队组长',
     photo: '',
-    imageHint: 'Reserved area for a headshot, lab portrait, or formal profile image.',
+    imageHint: '预留用于放置头像、实验室合影或正式个人照片。',
     bio:
-      'Use this paragraph for a concise biography. Introduce academic background, research interests, and the member\'s role in the Argus project.',
-    focus: 'Multimodal perception, detection pipeline design, and project direction.',
-    note: 'Reserved for publications, awards, contact details, or a short personal statement.',
+      '此处用于填写成员简介，可概述学术背景、研究兴趣，以及其在 Argus 项目中的职责分工。',
+    focus: '多模态感知、检测流程设计与项目整体方向把控。',
+    note: '预留用于填写论文成果、获奖信息、联系方式或简短个人说明。',
   },
   {
     id: 'member-02',
     index: '02',
-    name: 'Member Two',
-    role: 'Core Researcher / Algorithm Engineer',
+    name: '成员二',
+    role: '核心研究成员 / 算法工程师',
     photo: '',
-    imageHint: 'Reserved area for a team portrait, office photo, or personal profile picture.',
+    imageHint: '预留用于放置团队合影、工作场景照片或个人头像。',
     bio:
-      'Replace this text with the second member introduction. This area is intended for expertise, responsibilities, and technical strengths.',
-    focus: 'Sensor fusion, model training, deployment experiments, and evaluation.',
-    note: 'Reserved for project milestones, technical specialties, or collaboration links.',
+      '请将这里替换为第二位成员的介绍，适合描述其专业方向、项目职责与技术优势。',
+    focus: '传感器融合、模型训练、部署实验与效果评估。',
+    note: '预留用于填写项目节点、技术专长或合作链接。',
   },
   {
     id: 'member-03',
     index: '03',
-    name: 'Member Three',
-    role: 'Research Assistant / System Support',
+    name: '成员三',
+    role: '研究助理 / 系统支持',
     photo: '',
-    imageHint: 'Reserved area for an image with the same aspect ratio as the other members.',
+    imageHint: '预留用于放置与其他成员相同比例的照片素材。',
     bio:
-      'Use this block for the third member profile. You can place educational background, responsibilities, and a brief introduction here.',
-    focus: 'Dataset curation, experiment support, visualization, and documentation.',
-    note: 'Reserved for future expansion such as email, social links, or project tasks.',
+      '此处用于第三位成员的介绍，可填写教育背景、主要工作内容以及简要说明。',
+    focus: '数据集整理、实验支持、可视化与文档维护。',
+    note: '预留用于后续补充邮箱、社交链接或具体任务说明。',
   },
 ]
 

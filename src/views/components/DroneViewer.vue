@@ -55,8 +55,8 @@
             ></video>
 
             <div v-else class="demo-video-frame__placeholder">
-              <span class="demo-video-frame__badge">Demo Placeholder</span>
-              <p class="demo-video-frame__hint">Add the final evaluation video here so judges can verify the method on a complete driving sequence.</p>
+              <span class="demo-video-frame__badge">演示视频占位</span>
+              <p class="demo-video-frame__hint">请在这里放入最终评测视频，便于评审在完整驾驶序列中验证方法效果。</p>
               <code class="demo-video-frame__path">/videos/drone-demo.mp4</code>
             </div>
           </div>
@@ -95,51 +95,51 @@ const sections = [
     id: 'section-launch',
     nav: '01',
     backgroundLabel: 'Overview',
-    label: 'Overview',
-    eyebrow: 'Research Value',
-    title: 'Argus focuses on the hardest targets to detect when weather and visibility break standard vision pipelines.',
+    label: '概览',
+    eyebrow: '研究价值',
+    title: 'Argus 聚焦于在恶劣天气与低可见度条件下最难被检测到的交通小目标。',
     description:
-      'The project targets multimodal small object detection in all-weather traffic scenarios, where rain, haze, glare, low light, and motion blur make distant or weak targets easy to miss.\n\nFor judges, the key question is not whether the interface can present a model attractively, but whether the system solves a meaningful perception problem. Argus is positioned around that problem first: reliable detection when visual evidence is incomplete, unstable, or easily overwhelmed by the scene.',
-    caption: 'Problem framing / evaluation context / why the task matters',
+      '本项目面向全天候交通场景中的多模态小目标检测。降雨、雾霾、眩光、弱光以及运动模糊都会显著削弱远距离或弱特征目标的可见性。\n\n对于评审而言，关键不在于界面是否足够炫目，而在于系统是否真正解决了有意义的感知问题。Argus 首先围绕这一核心展开：当视觉证据不完整、不稳定，甚至被场景噪声淹没时，仍然保持可靠检测。',
+    caption: '问题定义 / 评审语境 / 任务意义',
     align: 'right',
     variant: 'hero',
     metrics: [
-      { value: 'All-weather', label: 'Target scenario' },
-      { value: 'Small objects', label: 'Core challenge' },
+      { value: '全天候', label: '目标场景' },
+      { value: '小目标', label: '核心挑战' },
     ],
   },
   {
     id: 'section-detail',
     nav: '02',
     backgroundLabel: 'Method',
-    label: 'Method',
-    eyebrow: 'Technical Approach',
-    title: 'The method combines multiple sensing cues so detection does not depend on a single fragile visual stream.',
+    label: '方法',
+    eyebrow: '技术路线',
+    title: '该方法融合多种感知线索，使检测不再依赖单一且脆弱的视觉输入。',
     description:
-      'Argus is designed as a multimodal perception pipeline. Instead of trusting one camera view under changing weather, it aligns complementary signals and uses them jointly to recover small targets that are weak, partially occluded, or easily buried in background noise.\n\nThis section should help a reviewer understand the contribution quickly: the work is about robustness, fusion, and traffic-scene perception under adverse conditions, not just a visually polished 3D presentation.',
-    caption: 'Multimodal fusion / robustness strategy / technical contribution',
+      'Argus 被设计为一条多模态感知流程。面对不断变化的天气条件，系统不再单独依赖某一路摄像头画面，而是对齐并联合利用互补信号，以恢复那些特征微弱、局部遮挡或容易被背景噪声淹没的小目标。\n\n这一部分应帮助评审快速理解项目贡献：重点在于鲁棒性、融合策略，以及恶劣交通环境下的感知能力，而不仅仅是一个经过包装的 3D 展示界面。',
+    caption: '多模态融合 / 鲁棒性策略 / 技术贡献',
     align: 'left',
     variant: 'method',
     metrics: [
-      { value: 'Multimodal', label: 'Input strategy' },
-      { value: 'Robustness', label: 'Design priority' },
+      { value: '多模态', label: '输入策略' },
+      { value: '鲁棒性', label: '设计优先级' },
     ],
   },
   {
     id: 'section-emotion',
     nav: '03',
     backgroundLabel: 'Outcome',
-    label: 'Result',
-    eyebrow: 'Evaluation Focus',
-    title: 'What matters in the final review is whether the system stays credible when the scene becomes difficult.',
+    label: '结果',
+    eyebrow: '评估重点',
+    title: '最终评审真正关注的是：当场景变得复杂时，系统是否依然可信。',
     description:
-      'The outcome should be judged on evidence: clearer target recovery, more stable perception under adverse weather, and stronger practical value for traffic scenarios where missed detections carry real cost.\n\nThis final narrative beat should leave judges with a precise conclusion. Argus is not only a concept demo; it is a research system built to improve detection reliability in conditions where conventional approaches are least dependable.',
-    caption: 'Expected evidence / application value / final takeaway',
+      '结果应当基于证据来判断：目标恢复是否更清晰、恶劣天气下的感知是否更稳定，以及在漏检代价真实存在的交通场景中是否具备更高应用价值。\n\n叙事的最后一段应让评审形成明确结论。Argus 不只是一个概念演示，而是一套面向传统方法最不可靠条件下、专门提升检测可信度的研究系统。',
+    caption: '预期证据 / 应用价值 / 最终结论',
     align: 'right',
     variant: 'outcome',
     metrics: [
-      { value: 'Traffic scenes', label: 'Application domain' },
-      { value: 'Reliable detection', label: 'Review standard' },
+      { value: '交通场景', label: '应用领域' },
+      { value: '可靠检测', label: '评审标准' },
     ],
   },
 ]
@@ -148,12 +148,12 @@ const demoAct = {
   id: 'section-demo-video',
   nav: '04',
   backgroundLabel: 'Demo',
-  label: 'Demo',
-  eyebrow: 'System Evidence',
-  caption: 'Full-sequence validation / multimodal pipeline / reviewer proof layer',
-  title: 'See the full pipeline operate on a complete traffic sequence.',
+  label: '演示',
+  eyebrow: '系统证据',
+  caption: '完整序列验证 / 多模态流程 / 评审证据层',
+  title: '在完整交通序列中查看整套流程的实际运行效果。',
   description:
-    'This final act should convert the narrative into verification. Show the end-to-end run here: multimodal input, adverse-weather behavior, small-object recovery, and the system response in a realistic driving scene so judges can inspect the evidence directly.',
+    '这一部分应将前面的叙事转化为可验证证据。请在这里展示端到端运行过程，包括多模态输入、恶劣天气下的系统表现、小目标恢复效果，以及真实驾驶场景中的响应过程，让评审能够直接检查结果。',
   align: 'left',
   variant: 'demo',
 }
@@ -166,7 +166,7 @@ const navigationItems = [
 const currentStepLabel = computed(() => {
   const activeItem = navigationItems.find((item) => item.id === currentSection.value)
   if (!activeItem) {
-    return 'Scroll to navigate'
+    return '滚动浏览'
   }
   return `${activeItem.nav} ${activeItem.label}`
 })

@@ -25,7 +25,7 @@ const routes = [
         path: 'project',
         name: 'Project',
         component: () => import('@/views/ProjectView.vue'),
-        meta: { title: '项目介绍' }
+        meta: { title: '可视化' }
       },
       {
         path: 'downloads',

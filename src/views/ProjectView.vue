@@ -1,183 +1,193 @@
 <template>
   <main ref="pageRef" class="project-view" :class="`theme-${themeMode}`">
     <section class="project-shell">
+      <aside class="project-nav" aria-label="场景模板导航">
+        <header class="project-nav__head">
+          <p class="project-kicker">场景导航</p>
+          <h1>场景模板</h1>
+          <span>默认从推荐场景开始，点击左侧样例切换展示内容。</span>
+        </header>
 
-      <section class="project-console" aria-label="检测演示台">
-        <aside class="project-side">
-          <div class="project-side__block">
-            <p class="project-kicker">输入图像</p>
-            <button class="project-btn project-btn--accent" type="button" @click="openFileDialog">
-              上传测试图片
-            </button>
+        <div class="project-nav__groups">
+          <section v-for="group in groupedCategories" :key="group.key" class="project-nav-group">
             <button
-              class="project-btn project-btn--ghost"
+              class="project-nav-group__trigger"
+              :class="{ 'is-open': group.key === openCategoryKey }"
               type="button"
-              :disabled="!userImageUrl"
-              @click="resetToDemoScene"
+              :aria-expanded="group.key === openCategoryKey"
+              :aria-controls="`category-panel-${group.key}`"
+              @click="setOpenCategory(group.key)"
             >
-              恢复默认演示图
-            </button>
-            <input
-              ref="fileInputRef"
-              class="project-file"
-              type="file"
-              accept="image/*"
-              @change="handleFileChange"
-            />
-          </div>
-
-          <div class="project-side__block">
-            <div class="project-side__row">
-              <p class="project-kicker">场景模板</p>
-              <span class="project-mini">{{ currentPreset.weather }}</span>
-            </div>
-            <div class="project-preset-list">
-              <button
-                v-for="preset in scenePresets"
-                :key="preset.id"
-                class="project-preset"
-                :class="{ 'is-active': preset.id === selectedPresetId }"
-                type="button"
-                @click="selectedPresetId = preset.id"
-              >
-                <strong>{{ preset.label }}</strong>
-                <span>{{ preset.description }}</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="project-side__block">
-            <div class="project-side__row">
-              <p class="project-kicker">置信度阈值</p>
-              <span class="project-mini">{{ thresholdPercent }}</span>
-            </div>
-            <input
-              v-model="confidenceThreshold"
-              class="project-slider"
-              type="range"
-              min="0.35"
-              max="0.95"
-              step="0.01"
-            />
-            <button class="project-btn project-btn--launch" type="button" :disabled="isRunning" @click="runDetection">
-              {{ isRunning ? '模拟推理中...' : '运行模拟检测' }}
-            </button>
-            <p class="project-note">{{ statusText }}</p>
-          </div>
-        </aside>
-
-        <section class="project-stage">
-          <header class="project-stage__header">
-            <div>
-              <p class="project-kicker">可视化输出</p>
-              <h2>{{ currentPreset.label }}</h2>
-            </div>
-            <div class="project-stage__meta">
-              <span>{{ currentPreset.mode }}</span>
-              <span>{{ currentPreset.fusion }}</span>
-              <span>{{ inputSourceLabel }}</span>
-            </div>
-          </header>
-
-          <div class="project-stage__viewer" :class="{ 'is-running': isRunning }">
-            <img class="project-stage__image" :src="activeImageSrc" :alt="activeImageAlt" />
-            <div class="project-stage__grid" aria-hidden="true"></div>
-            <div v-if="isRunning" class="project-stage__scan" aria-hidden="true"></div>
-
-            <div v-if="visibleDetections.length && hasRun" class="project-overlay">
-              <button
-                v-for="item in visibleDetections"
-                :key="item.id"
-                class="project-box"
-                :class="{ 'is-active': item.id === activeDetectionId }"
-                :style="boxStyle(item)"
-                type="button"
-                @mouseenter="activeDetectionId = item.id"
-                @focus="activeDetectionId = item.id"
-                @click="activeDetectionId = item.id"
-              >
-                <span class="project-box__tag">
-                  {{ item.label }}
-                  <strong>{{ scoreLabel(item.score) }}</strong>
-                </span>
-              </button>
-            </div>
-
-            <div v-if="!hasRun && !isRunning" class="project-stage__hint">
-              <p>演示图已就绪</p>
-              <span>点击“运行模拟检测”查看检测框、类别和置信度</span>
-            </div>
-          </div>
-
-          <footer class="project-stage__footer">
-            <div>
-              <span>输入源</span>
-              <strong>{{ inputSourceLabel }}</strong>
-            </div>
-            <div>
-              <span>场景属性</span>
-              <strong>{{ currentPreset.weather }}</strong>
-            </div>
-            <div>
-              <span>推理状态</span>
-              <strong>{{ hasRun ? '可视化结果已生成' : '等待推理触发' }}</strong>
-            </div>
-          </footer>
-        </section>
-
-        <aside class="project-results">
-          <header>
-            <p class="project-kicker">推理摘要</p>
-            <h2>检测结果面板</h2>
-          </header>
-
-          <dl class="project-metrics">
-            <div>
-              <dt>输出目标</dt>
-              <dd>{{ visibleDetections.length }}</dd>
-            </div>
-            <div>
-              <dt>平均置信度</dt>
-              <dd>{{ averageConfidence }}</dd>
-            </div>
-            <div>
-              <dt>模拟时延</dt>
-              <dd>{{ currentPreset.latency }}</dd>
-            </div>
-          </dl>
-
-          <div class="project-summary">
-            <p>{{ summaryTitle }}</p>
-            <span>{{ summaryText }}</span>
-          </div>
-
-          <div v-if="visibleDetections.length && hasRun" class="project-list">
-            <button
-              v-for="item in visibleDetections"
-              :key="item.id"
-              class="project-list__item"
-              :class="{ 'is-active': item.id === activeDetectionId }"
-              type="button"
-              @mouseenter="activeDetectionId = item.id"
-              @focus="activeDetectionId = item.id"
-              @click="activeDetectionId = item.id"
-            >
-              <div class="project-list__top">
-                <strong>{{ item.label }}</strong>
-                <span>{{ scoreLabel(item.score) }}</span>
+              <span>{{ group.title }}</span>
+              <div class="project-nav-group__meta">
+                <strong>{{ group.scenes.length }}</strong>
+                <i aria-hidden="true">{{ group.key === openCategoryKey ? '−' : '+' }}</i>
               </div>
-              <p>{{ item.channel }}</p>
-              <small>{{ item.note }}</small>
             </button>
+
+            <div
+              v-show="group.key === openCategoryKey"
+              :id="`category-panel-${group.key}`"
+              class="project-nav-group__list"
+            >
+              <button
+                v-for="scene in group.scenes"
+                :key="scene.id"
+                class="project-scene-button"
+                :class="{ 'is-active': scene.id === selectedSceneId }"
+                type="button"
+                :aria-pressed="scene.id === selectedSceneId"
+                @click="selectedSceneId = scene.id"
+              >
+                <div class="project-scene-button__top">
+                  <strong>{{ scene.title }}</strong>
+                  <span v-if="scene.isFeatured" class="project-scene-button__badge"> 推荐 </span>
+                </div>
+                <small>{{ compactTags(scene.tags) }}</small>
+              </button>
+            </div>
+          </section>
+        </div>
+      </aside>
+
+      <section class="project-stage" aria-label="检测演示主舞台">
+        <header class="project-stage__head">
+          <div class="project-stage__heading">
+            <p class="project-kicker">演示主舞台</p>
+            <div class="project-stage__title">
+              <h2>{{ currentScene.title }}</h2>
+              <p>{{ currentScene.summary }}</p>
+            </div>
           </div>
 
-          <div v-else class="project-empty">
-            <p>{{ hasRun ? '当前阈值下没有可见结果。' : '结果列表尚未生成。' }}</p>
-            <span>{{ hasRun ? '请降低阈值或切换场景模板。' : '上传图片或直接使用默认演示图后运行模拟检测。' }}</span>
+          <div class="project-stage__control-panel">
+            <div class="project-stage__browse" aria-label="场景顺序浏览">
+              <button
+                class="project-stage__browse-button"
+                type="button"
+                :disabled="!hasPreviousScene"
+                @click="goToPreviousScene"
+              >
+                上一场景
+              </button>
+              <button
+                class="project-stage__browse-button"
+                type="button"
+                :disabled="!hasNextScene"
+                @click="goToNextScene"
+              >
+                下一场景
+              </button>
+            </div>
+
+            <section class="project-toolbar" aria-label="视图切换控件">
+              <div class="project-switcher">
+                <span class="project-switcher__label">内容视图</span>
+                <div
+                  class="project-switcher__group"
+                  role="tablist"
+                  aria-label="内容视图"
+                  @keydown="handleSwitcherKeydown($event, viewOptions, activeView, setActiveView)"
+                >
+                  <button
+                    v-for="option in viewOptions"
+                    :key="option.value"
+                    class="project-switcher__button"
+                    :class="{ 'is-active': activeView === option.value }"
+                    type="button"
+                    role="tab"
+                    :id="`view-tab-${option.value}`"
+                    :aria-selected="activeView === option.value"
+                    aria-controls="project-stage-panel"
+                    :tabindex="activeView === option.value ? 0 : -1"
+                    @click="setActiveView(option.value)"
+                  >
+                    {{ option.label }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="project-switcher">
+                <span class="project-switcher__label">模态切换</span>
+                <div
+                  class="project-switcher__group"
+                  role="tablist"
+                  aria-label="模态切换"
+                  @keydown="
+                    handleSwitcherKeydown(
+                      $event,
+                      modalityOptions,
+                      activeModality,
+                      setActiveModality,
+                    )
+                  "
+                >
+                  <button
+                    v-for="option in modalityOptions"
+                    :key="option.value"
+                    class="project-switcher__button"
+                    :class="{ 'is-active': activeModality === option.value }"
+                    type="button"
+                    role="tab"
+                    :id="`modality-tab-${option.value}`"
+                    :aria-selected="activeModality === option.value"
+                    aria-controls="project-stage-panel"
+                    :tabindex="activeModality === option.value ? 0 : -1"
+                    @click="setActiveModality(option.value)"
+                  >
+                    {{ option.label }}
+                  </button>
+                </div>
+              </div>
+            </section>
           </div>
-        </aside>
+        </header>
+
+        <div class="project-stage__body">
+          <figure
+            id="project-stage-panel"
+            class="project-display"
+            role="tabpanel"
+            :aria-labelledby="`view-tab-${activeView}`"
+          >
+            <div
+              class="project-display__frame"
+              role="group"
+              :aria-labelledby="`modality-tab-${activeModality}`"
+            >
+              <div class="project-display__chips">
+                <span>{{ currentViewLabel }}</span>
+                <span>{{ currentModalityLabel }}</span>
+              </div>
+
+              <template v-if="hasActiveImage">
+                <img
+                  class="project-display__image"
+                  :src="activeImageSrc"
+                  :alt="activeImageAlt"
+                  @error="handleImageError"
+                />
+              </template>
+
+              <div v-else class="project-display__empty" role="status" aria-live="polite">
+                <strong>当前图像暂不可用</strong>
+                <p>请切换其他场景或其他视图继续查看演示内容。</p>
+              </div>
+            </div>
+
+            <figcaption class="project-display__caption">
+              {{ activeImageCaption }}
+            </figcaption>
+          </figure>
+
+          <aside class="project-cues" aria-label="讲解提要">
+            <div v-for="item in cueItems" :key="item.label" class="project-cue">
+              <span>{{ item.label }}</span>
+              <p>{{ item.value }}</p>
+            </div>
+          </aside>
+        </div>
       </section>
-
     </section>
   </main>
 </template>
@@ -190,269 +200,310 @@ const injectedTheme = inject('argusTheme', ref(true))
 const themeMode = computed(() => (injectedTheme.value ? 'dark' : 'light'))
 
 const pageRef = ref(null)
-const fileInputRef = ref(null)
-const userImageUrl = ref('')
-const uploadedFileName = ref('')
-const selectedPresetId = ref('rain-crossing')
-const confidenceThreshold = ref(0.54)
-const isRunning = ref(false)
-const hasRun = ref(false)
-const runResults = ref([])
-const activeDetectionId = ref('')
-
-let timeoutHandle = null
+const imageErrored = ref(false)
 let context = null
 
-function createSceneSvg(config) {
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000">
-      <defs>
-        <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="${config.skyTop}" />
-          <stop offset="100%" stop-color="${config.skyBottom}" />
-        </linearGradient>
-        <linearGradient id="road" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="${config.roadA}" />
-          <stop offset="100%" stop-color="${config.roadB}" />
-        </linearGradient>
-        <radialGradient id="glow" cx="50%" cy="42%" r="54%">
-          <stop offset="0%" stop-color="${config.glow}" stop-opacity="0.88" />
-          <stop offset="100%" stop-color="${config.glow}" stop-opacity="0" />
-        </radialGradient>
-      </defs>
-      <rect width="1600" height="1000" fill="url(#bg)" />
-      <rect width="1600" height="1000" fill="url(#glow)" />
-      <path d="M-120 728 L548 248 L806 370 L144 882 Z" fill="url(#road)" opacity="0.94" />
-      <path d="M742 320 L1720 672 L1524 862 L600 470 Z" fill="url(#road)" opacity="0.84" />
-      <path d="M524 232 L592 198 L1520 542 L1452 576 Z" fill="${config.lane}" opacity="0.58" />
-      <path d="M118 744 L190 694 L770 352 L698 404 Z" fill="${config.lane}" opacity="0.52" />
-      <g opacity="0.48" stroke="${config.grid}" stroke-width="1">
-        <path d="M0 180 H1600" />
-        <path d="M0 340 H1600" />
-        <path d="M0 500 H1600" />
-        <path d="M0 660 H1600" />
-        <path d="M0 820 H1600" />
-        <path d="M220 0 V1000" />
-        <path d="M500 0 V1000" />
-        <path d="M780 0 V1000" />
-        <path d="M1060 0 V1000" />
-        <path d="M1340 0 V1000" />
-      </g>
-      <g fill="${config.marker}">
-        <rect x="322" y="620" width="78" height="32" rx="7" />
-        <rect x="830" y="442" width="62" height="28" rx="7" opacity="0.84" />
-        <rect x="1054" y="544" width="82" height="34" rx="7" />
-        <rect x="614" y="532" width="22" height="38" rx="9" opacity="0.86" />
-        <rect x="1218" y="634" width="24" height="44" rx="10" opacity="0.82" />
-      </g>
-      <text x="94" y="124" fill="${config.text}" font-size="44" font-family="Georgia, serif" letter-spacing="2">${config.title}</text>
-      <text x="96" y="176" fill="${config.subtle}" font-size="20" font-family="Arial, sans-serif" letter-spacing="3">ARGUS DRONE DEMO</text>
-    </svg>
-  `
+const imageModules = import.meta.glob('../assets/imgs/*/*.jpg', {
+  eager: true,
+  import: 'default',
+})
 
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`
+function resolveSceneImage(folder, file) {
+  return imageModules[`../assets/imgs/${folder}/${file}`] ?? ''
 }
 
-const scenePresets = [
-  {
-    id: 'rain-crossing',
-    label: '雨雾路口',
-    description: '低可见度交叉路口中的小目标恢复。',
-    mode: '无人机高位俯视',
-    weather: '雨雾',
-    fusion: 'RGB / Thermal / Prior',
-    latency: '148 ms',
-    imageSrc: createSceneSvg({
-      title: 'Rain Crossing',
-      skyTop: '#07111f',
-      skyBottom: '#17263d',
-      roadA: '#243246',
-      roadB: '#0d1420',
-      glow: '#b58f63',
-      lane: '#ceb58b',
-      grid: 'rgba(190,172,138,0.22)',
-      marker: '#d9b472',
-      text: '#f5eee0',
-      subtle: '#ccb793',
-    }),
-    detections: [
-      { id: 'rc-1', label: '小汽车', score: 0.94, left: 18.2, top: 59.8, width: 10.8, height: 7.9, color: '#d9b472', channel: 'RGB + 热成像线索', note: '雨幕遮挡下保持稳定边界。' },
-      { id: 'rc-2', label: '行人', score: 0.81, left: 37.8, top: 52.2, width: 4.2, height: 8.8, color: '#97d5c7', channel: '热成像增强', note: '弱目标示意输出。' },
-      { id: 'rc-3', label: '货车', score: 0.9, left: 63.5, top: 45.6, width: 12.6, height: 9.3, color: '#8fb0ff', channel: 'RGB + 结构先验', note: '受雾霾影响较大仍可检测。' },
-      { id: 'rc-4', label: '骑行者', score: 0.76, left: 77.8, top: 62.4, width: 4.6, height: 9.5, color: '#f2a6b3', channel: '多模态融合', note: '复杂路口中的小目标类别。' },
-    ],
-  },
-  {
-    id: 'night-arterial',
-    label: '夜间主干道',
-    description: '夜间逆光与车灯干扰下的检测演示。',
-    mode: '无人机斜俯视',
-    weather: '夜间 / 眩光',
-    fusion: 'RGB / Thermal',
-    latency: '131 ms',
-    imageSrc: createSceneSvg({
-      title: 'Night Arterial',
-      skyTop: '#050811',
-      skyBottom: '#121826',
-      roadA: '#293347',
-      roadB: '#111722',
-      glow: '#8f7453',
-      lane: '#d8b88c',
-      grid: 'rgba(189,170,132,0.18)',
-      marker: '#f2c982',
-      text: '#f7efe1',
-      subtle: '#baa789',
-    }),
-    detections: [
-      { id: 'na-1', label: '公交车', score: 0.93, left: 21.4, top: 58.4, width: 13.4, height: 8.8, color: '#d9b472', channel: 'RGB + 热成像线索', note: '夜间车灯干扰下的稳定输出。' },
-      { id: 'na-2', label: '小汽车', score: 0.87, left: 49.7, top: 49.8, width: 8.4, height: 6.7, color: '#8fb0ff', channel: 'RGB 通道', note: '逆光区域模板结果。' },
-      { id: 'na-3', label: '行人', score: 0.72, left: 69.1, top: 64.7, width: 3.8, height: 8.6, color: '#97d5c7', channel: '热成像增强', note: '属于远距小目标。' },
-    ],
-  },
-  {
-    id: 'bridge-backlight',
-    label: '逆光高架',
-    description: '高反差桥面中的远距目标检测。',
-    mode: '无人机远距航拍',
-    weather: '逆光 / 薄雾',
-    fusion: 'RGB / Thermal / Geometry',
-    latency: '156 ms',
-    imageSrc: createSceneSvg({
-      title: 'Backlight Bridge',
-      skyTop: '#0f1727',
-      skyBottom: '#202838',
-      roadA: '#314259',
-      roadB: '#182030',
-      glow: '#d0a66d',
-      lane: '#e0c394',
-      grid: 'rgba(202,183,144,0.18)',
-      marker: '#f0cb8a',
-      text: '#fcf3e4',
-      subtle: '#ccb28d',
-    }),
-    detections: [
-      { id: 'bb-1', label: '小汽车', score: 0.89, left: 16.6, top: 61.2, width: 8.9, height: 6.6, color: '#d9b472', channel: 'RGB + 几何先验', note: '桥面逆光条件下的远距车辆。' },
-      { id: 'bb-2', label: '工程车', score: 0.85, left: 56.4, top: 46.3, width: 11.8, height: 8.2, color: '#8fb0ff', channel: '多模态融合', note: '高亮背景中的结构稳定输出。' },
-      { id: 'bb-3', label: '行人', score: 0.68, left: 74.8, top: 63.7, width: 3.2, height: 8.1, color: '#97d5c7', channel: '热成像增强', note: '阈值较高时会自动被过滤。' },
-      { id: 'bb-4', label: '摩托车', score: 0.74, left: 34.2, top: 54.5, width: 5.1, height: 6.8, color: '#f2a6b3', channel: 'RGB + 热成像线索', note: '小尺寸目标示意结果。' },
-    ],
-  },
+const categoryDefinitions = [
+  { key: 'complex-light', title: '复杂光照场景' },
+  { key: 'occlusion-dense', title: '遮挡与密集场景' },
+  { key: 'weather-hard', title: '恶劣天气场景' },
+  { key: 'far-small', title: '远距小目标场景' },
 ]
 
-const currentPreset = computed(() => scenePresets.find((item) => item.id === selectedPresetId.value) ?? scenePresets[0])
-const activeImageSrc = computed(() => userImageUrl.value || currentPreset.value.imageSrc)
-const activeImageAlt = computed(() => (userImageUrl.value ? `用户上传测试图：${uploadedFileName.value}` : `${currentPreset.value.label} 默认演示图`))
-const inputSourceLabel = computed(() => (userImageUrl.value ? `上传图像：${uploadedFileName.value}` : `默认图像：${currentPreset.value.label}`))
-const visibleDetections = computed(() => runResults.value.filter((item) => item.score >= Number(confidenceThreshold.value)))
-const thresholdPercent = computed(() => `${Math.round(Number(confidenceThreshold.value) * 100)}%`)
-const averageConfidence = computed(() => {
-  if (!visibleDetections.value.length) return '--'
-  const avg = visibleDetections.value.reduce((total, item) => total + item.score, 0) / visibleDetections.value.length
-  return `${Math.round(avg * 100)}%`
-})
-const statusText = computed(() => {
-  if (isRunning.value) return '正在调用前端模拟推理服务，并生成检测可视化结果。'
-  if (hasRun.value) return `已完成 ${currentPreset.value.label} 场景的演示推理，可继续切换阈值查看结果。`
-  return '等待输入图像与推理指令。'
-})
-const summaryTitle = computed(() => {
-  if (isRunning.value) return '演示引擎正在生成结果。'
-  if (!hasRun.value) return '尚未输出检测结果。'
-  return `已输出 ${visibleDetections.value.length} 个目标候选。`
-})
-const summaryText = computed(() => {
-  if (isRunning.value) return '正在推理'
-  if (!hasRun.value) return '上传测试图或直接使用默认演示图后，点击运行即可查看检测框、类别与置信度。'
-  if (!visibleDetections.value.length) return '当前阈值过滤掉了全部结果，请适当降低阈值。'
-  return '结果列表与叠加框同步联动，鼠标移入任一结果即可高亮对应目标。'
+const sceneCatalog = [
+  {
+    id: '1',
+    title: '遮挡路口',
+    categoryKey: 'occlusion-dense',
+    tags: ['夜间', '遮挡', '多目标'],
+    summary: '夜间路口中的密集车辆与遮挡样例。',
+    challenge: '车流拥挤，边界重叠，局部强光扰动明显。',
+    targets: '以小汽车为主，包含密集近邻目标。',
+    performance: '模型在遮挡区域仍能保持较稳定的主要目标覆盖。',
+  },
+  {
+    id: '2',
+    title: '夜间主干道',
+    categoryKey: 'occlusion-dense',
+    tags: ['夜间', '车灯干扰', '排队车流'],
+    summary: '主干道夜间连续车流检测样例。',
+    challenge: '车灯高亮与长队列分布同时存在，容易造成漏检。',
+    targets: '以连续车流中的车辆目标为主。',
+    performance: '对主干道连续车辆具有较好的整体覆盖能力。',
+  },
+  {
+    id: '3',
+    title: '强光道路',
+    categoryKey: 'complex-light',
+    tags: ['白天', '强光', '阴影干扰'],
+    summary: '白天强光与阴影同时存在的道路样例。',
+    challenge: '高亮路面与树影交错，目标边界容易被压缩。',
+    targets: '包含公交车、小汽车等多类别目标。',
+    performance: '在强光与阴影共存条件下仍保持较清晰的目标定位。',
+  },
+  {
+    id: '4',
+    title: '极低照度道路',
+    categoryKey: 'complex-light',
+    tags: ['夜间', '极低照度', '暗区'],
+    summary: '局部照明下的大范围暗场检测样例。',
+    challenge: '整体可见度低，暗区占比大，细节信息不足。',
+    targets: '以暗区道路中的车辆目标为主。',
+    performance: '红外视图能够明显补足低照度环境中的感知信息。',
+  },
+  {
+    id: '5',
+    title: '开阔路口远距车流',
+    categoryKey: 'far-small',
+    tags: ['白天', '远距目标', '尺度差异'],
+    summary: '开阔视场中远距车辆分布样例。',
+    challenge: '远近目标尺度差异明显，小目标易被背景淹没。',
+    targets: '包含货车、小汽车等不同尺度车辆。',
+    performance: '对大视场中的远距目标仍保持持续检出能力。',
+  },
+  {
+    id: '6',
+    title: '低照度城市道路',
+    categoryKey: 'complex-light',
+    tags: ['夜间', '低照度', '阴影遮挡'],
+    summary: '夜间城市道路中的低照度样例。',
+    challenge: '道路照明不均，阴影区域多，边缘目标较弱。',
+    targets: '以分散分布的车辆目标为主。',
+    performance: '对非密集分布场景也保持稳定的基础识别能力。',
+  },
+  {
+    id: '7',
+    title: '低能见度雾天',
+    categoryKey: 'weather-hard',
+    tags: ['雾天', '低能见度', '模糊退化'],
+    summary: '雾霾退化条件下的恶劣天气样例。',
+    challenge: '对比度低，远距目标模糊，边界信息衰减明显。',
+    targets: '以远距模糊车辆目标为主。',
+    performance: '在恶劣天气下仍保持可用的目标定位表现。',
+  },
+  {
+    id: '8',
+    title: '夜间远距主干道',
+    categoryKey: 'far-small',
+    tags: ['夜间', '小目标', '照明不均'],
+    summary: '低照度主干道中的远距小目标样例。',
+    challenge: '目标尺寸小且分布稀疏，照明不均影响稳定识别。',
+    targets: '以远距弱目标和小尺寸车辆为主。',
+    performance: '对夜间远距小目标具有较好的保持能力。',
+  },
+  {
+    id: '9',
+    title: '极暗背景小目标',
+    categoryKey: 'complex-light',
+    tags: ['极暗', '局部强光', '困难样例'],
+    summary: '极暗背景中的小目标困难场景。',
+    challenge: '全局亮度极低，局部强光形成强烈反差。',
+    targets: '以极暗场景中的弱小目标为主。',
+    performance: '能够体现模型对极端照明条件的适应能力。',
+    isFeatured: true,
+  },
+].map((scene) => ({
+  ...scene,
+  assets: {
+    rgb_original: resolveSceneImage(scene.id, 'rgb_original.jpg'),
+    x_original: resolveSceneImage(scene.id, 'x_original.jpg'),
+    rgb_prediction: resolveSceneImage(scene.id, 'rgb_prediction.jpg'),
+    x_prediction: resolveSceneImage(scene.id, 'x_prediction.jpg'),
+  },
+}))
+
+const viewOptions = [
+  { value: 'original', label: '原始输入' },
+  { value: 'prediction', label: '推理结果' },
+  { value: 'gt', label: 'GT 标准答案' },
+]
+
+const modalityOptions = [
+  { value: 'rgb', label: 'RGB' },
+  { value: 'infrared', label: '红外' },
+]
+
+const selectedSceneId = ref('9')
+const activeView = ref('original')
+const activeModality = ref('rgb')
+const openCategoryKey = ref('complex-light')
+
+const groupedCategories = computed(() =>
+  categoryDefinitions.map((category) => ({
+    ...category,
+    scenes: sceneCatalog.filter((scene) => scene.categoryKey === category.key),
+  })),
+)
+
+const currentScene = computed(
+  () => sceneCatalog.find((scene) => scene.id === selectedSceneId.value) ?? sceneCatalog[0],
+)
+
+const currentSceneIndex = computed(() =>
+  sceneCatalog.findIndex((scene) => scene.id === selectedSceneId.value),
+)
+
+const hasPreviousScene = computed(() => currentSceneIndex.value > 0)
+const hasNextScene = computed(() => currentSceneIndex.value < sceneCatalog.length - 1)
+
+const currentCategory = computed(
+  () =>
+    categoryDefinitions.find((category) => category.key === currentScene.value.categoryKey) ??
+    categoryDefinitions[0],
+)
+
+const currentViewLabel = computed(
+  () => viewOptions.find((option) => option.value === activeView.value)?.label ?? '',
+)
+
+const currentModalityLabel = computed(
+  () => modalityOptions.find((option) => option.value === activeModality.value)?.label ?? '',
+)
+
+const activeImageKey = computed(() => {
+  if (activeView.value === 'original' && activeModality.value === 'rgb') return 'rgb_original'
+  if (activeView.value === 'original' && activeModality.value === 'infrared') return 'x_original'
+  if (activeModality.value === 'rgb') return 'rgb_prediction'
+  return 'x_prediction'
 })
 
-watch(selectedPresetId, () => clearRun())
-watch(visibleDetections, (items) => {
-  if (!items.length) {
-    activeDetectionId.value = ''
-    return
+const activeImageSrc = computed(() => currentScene.value.assets[activeImageKey.value] || '')
+const hasActiveImage = computed(() => Boolean(activeImageSrc.value) && !imageErrored.value)
+
+const activeImageAlt = computed(
+  () => `${currentScene.value.title} ${currentViewLabel.value} ${currentModalityLabel.value}`,
+)
+
+const activeImageCaption = computed(() => {
+  if (!hasActiveImage.value) {
+    return '当前视图没有可用图像，建议切换其他场景或其他视图继续浏览。'
   }
-  if (!items.some((item) => item.id === activeDetectionId.value)) {
-    activeDetectionId.value = items[0].id
+
+  if (activeView.value === 'original') {
+    return `当前显示 ${currentModalityLabel.value} 原始输入，用于观察场景本身的感知条件与复杂因素。`
   }
+
+  if (activeView.value === 'prediction') {
+    return `当前显示 ${currentModalityLabel.value} 推理结果，用于观察模型在该场景下的输出表现。`
+  }
+
+  return `当前显示 ${currentModalityLabel.value} GT 标准答案，用于答辩过程中的结果对照。`
 })
 
-function openFileDialog() {
-  fileInputRef.value?.click()
+const cueItems = computed(() => [
+  {
+    label: '关键挑战',
+    value: currentScene.value.challenge,
+  },
+  {
+    label: '识别目标',
+    value: currentScene.value.targets,
+  },
+  {
+    label: '模型表现',
+    value: currentScene.value.performance,
+  },
+  {
+    label: '所属类别',
+    value: currentCategory.value.title,
+  },
+])
+
+watch([selectedSceneId, activeView, activeModality], () => {
+  imageErrored.value = false
+  openCategoryKey.value = currentScene.value.categoryKey
+})
+
+function compactTags(tags) {
+  return tags.slice(0, 2).join(' / ')
 }
 
-function handleFileChange(event) {
-  const file = event.target.files?.[0]
-  if (!file) return
-  if (userImageUrl.value) URL.revokeObjectURL(userImageUrl.value)
-  userImageUrl.value = URL.createObjectURL(file)
-  uploadedFileName.value = file.name
-  clearRun()
+function setOpenCategory(value) {
+  openCategoryKey.value = value
 }
 
-function resetToDemoScene() {
-  if (userImageUrl.value) URL.revokeObjectURL(userImageUrl.value)
-  userImageUrl.value = ''
-  uploadedFileName.value = ''
-  if (fileInputRef.value) fileInputRef.value.value = ''
-  clearRun()
+function goToPreviousScene() {
+  if (!hasPreviousScene.value) return
+  selectedSceneId.value = sceneCatalog[currentSceneIndex.value - 1].id
 }
 
-function clearRun() {
-  if (timeoutHandle) {
-    window.clearTimeout(timeoutHandle)
-    timeoutHandle = null
+function goToNextScene() {
+  if (!hasNextScene.value) return
+  selectedSceneId.value = sceneCatalog[currentSceneIndex.value + 1].id
+}
+
+function setActiveView(value) {
+  activeView.value = value
+}
+
+function setActiveModality(value) {
+  activeModality.value = value
+}
+
+function handleImageError() {
+  imageErrored.value = true
+}
+
+function handleSwitcherKeydown(event, options, currentValue, setter) {
+  const keys = ['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp', 'Home', 'End']
+  if (!keys.includes(event.key)) return
+
+  event.preventDefault()
+
+  const currentIndex = options.findIndex((option) => option.value === currentValue.value)
+  let nextIndex = currentIndex
+
+  if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+    nextIndex = (currentIndex + 1 + options.length) % options.length
+  } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+    nextIndex = (currentIndex - 1 + options.length) % options.length
+  } else if (event.key === 'Home') {
+    nextIndex = 0
+  } else if (event.key === 'End') {
+    nextIndex = options.length - 1
   }
-  isRunning.value = false
-  hasRun.value = false
-  runResults.value = []
-  activeDetectionId.value = ''
-}
 
-function runDetection() {
-  clearRun()
-  isRunning.value = true
-  timeoutHandle = window.setTimeout(() => {
-    runResults.value = currentPreset.value.detections.map((item) => ({ ...item }))
-    hasRun.value = true
-    isRunning.value = false
-    activeDetectionId.value = runResults.value[0]?.id ?? ''
-    timeoutHandle = null
-  }, 1150)
-}
+  setter(options[nextIndex].value)
 
-function scoreLabel(score) {
-  return `${Math.round(score * 100)}%`
-}
-
-function boxStyle(item) {
-  return {
-    left: `${item.left}%`,
-    top: `${item.top}%`,
-    width: `${item.width}%`,
-    height: `${item.height}%`,
-    '--box-tone': item.color,
-  }
+  const buttons = Array.from(event.currentTarget.querySelectorAll('button'))
+  buttons[nextIndex]?.focus()
 }
 
 onMounted(() => {
   if (!pageRef.value || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
   context = gsap.context(() => {
-    const hero = pageRef.value.querySelector('.project-hero')
-    const consoleNode = pageRef.value.querySelector('.project-console')
-    const footnotes = pageRef.value.querySelectorAll('.project-footnotes article')
+    const nav = pageRef.value.querySelector('.project-nav')
+    const stageHead = pageRef.value.querySelector('.project-stage__head')
+    const toolbar = pageRef.value.querySelector('.project-toolbar')
+    const display = pageRef.value.querySelector('.project-display')
+    const cues = pageRef.value.querySelectorAll('.project-cue')
+
     gsap
       .timeline({ defaults: { ease: 'power3.out' } })
-      .fromTo(hero, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.82 })
-      .fromTo(consoleNode, { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.9 }, 0.14)
-      .fromTo(footnotes, { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0, duration: 0.62, stagger: 0.08 }, 0.34)
+      .fromTo(nav, { autoAlpha: 0, x: -18 }, { autoAlpha: 1, x: 0, duration: 0.56 })
+      .fromTo(stageHead, { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0, duration: 0.54 }, 0.08)
+      .fromTo(toolbar, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.42 }, 0.14)
+      .fromTo(display, { autoAlpha: 0, y: 20 }, { autoAlpha: 1, y: 0, duration: 0.66 }, 0.22)
+      .fromTo(
+        cues,
+        { autoAlpha: 0, y: 10 },
+        { autoAlpha: 1, y: 0, duration: 0.38, stagger: 0.04 },
+        0.3,
+      )
   }, pageRef)
 })
 
 onBeforeUnmount(() => {
-  if (timeoutHandle) window.clearTimeout(timeoutHandle)
-  if (userImageUrl.value) URL.revokeObjectURL(userImageUrl.value)
   context?.revert()
 })
 </script>
@@ -460,544 +511,588 @@ onBeforeUnmount(() => {
 <style scoped>
 .project-view {
   --project-title: #f4ede1;
-  --project-copy: rgba(225, 221, 213, 0.84);
+  --project-copy: rgba(225, 221, 213, 0.88);
   --project-copy-soft: rgba(193, 187, 177, 0.76);
   --project-kicker: rgba(215, 181, 116, 0.88);
   --project-accent: #d7b574;
-  --project-accent-deep: #8f6942;
+  --project-accent-strong: #e3c68a;
+  --project-accent-soft: rgba(215, 181, 116, 0.12);
   --project-line: rgba(207, 178, 121, 0.14);
-  --project-line-strong: rgba(207, 178, 121, 0.26);
+  --project-line-strong: rgba(207, 178, 121, 0.34);
   --project-divider: rgba(207, 178, 121, 0.1);
-  --project-surface: rgba(10, 15, 23, 0.8);
-  --project-stage: rgba(7, 11, 17, 0.72);
+  --project-surface: rgba(10, 15, 23, 0.82);
+  --project-screen: rgba(4, 8, 14, 0.94);
+  --project-screen-glow: rgba(215, 181, 116, 0.08);
   --project-shadow: rgba(0, 0, 0, 0.24);
-  --project-grid: rgba(255, 255, 255, 0.05);
-  --project-scan: rgba(215, 181, 116, 0.24);
   min-height: calc(100vh - 56px);
-  padding: 36px 24px 88px;
+  padding: 22px 20px 40px;
   color: var(--project-title);
   font-family: 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
 }
 
 .theme-light.project-view {
   --project-title: #1f2530;
-  --project-copy: rgba(48, 53, 61, 0.84);
-  --project-copy-soft: rgba(88, 89, 88, 0.76);
+  --project-copy: rgba(48, 53, 61, 0.88);
+  --project-copy-soft: rgba(88, 89, 88, 0.74);
   --project-kicker: rgba(164, 120, 52, 0.92);
   --project-accent: #c89b57;
-  --project-accent-deep: #9a6a3b;
+  --project-accent-strong: #b78031;
+  --project-accent-soft: rgba(197, 155, 79, 0.12);
   --project-line: rgba(165, 125, 60, 0.16);
-  --project-line-strong: rgba(165, 125, 60, 0.28);
+  --project-line-strong: rgba(165, 125, 60, 0.32);
   --project-divider: rgba(165, 125, 60, 0.12);
-  --project-surface: rgba(255, 252, 246, 0.88);
-  --project-stage: rgba(251, 247, 239, 0.88);
-  --project-shadow: rgba(65, 54, 37, 0.09);
-  --project-grid: rgba(60, 49, 33, 0.06);
-  --project-scan: rgba(194, 142, 67, 0.18);
+  --project-surface: rgba(255, 252, 246, 0.92);
+  --project-screen: rgba(242, 236, 226, 0.98);
+  --project-screen-glow: rgba(194, 142, 67, 0.08);
+  --project-shadow: rgba(65, 54, 37, 0.08);
 }
 
 .project-shell {
-  max-width: 1380px;
+  max-width: 1480px;
   margin: 0 auto;
   display: grid;
-  gap: clamp(2.5rem, 5vw, 4.75rem);
+  grid-template-columns: 232px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
 }
 
 .project-kicker {
   margin: 0;
+  color: var(--project-kicker);
   font-size: var(--argus-type-label);
   line-height: var(--argus-leading-label);
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--project-kicker);
 }
 
-.project-hero {
+.project-nav,
+.project-stage {
+  border: 1px solid var(--project-line);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--project-surface) 97%, transparent),
+    var(--project-surface)
+  );
+  box-shadow: 0 28px 72px var(--project-shadow);
+}
+
+.project-nav {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.72fr);
-  gap: clamp(2rem, 5vw, 5rem);
-  align-items: end;
+  gap: 1.2rem;
+  padding: 18px 12px;
 }
 
-.project-hero__title,
-.project-stage h2,
-.project-results h2,
-.project-footnotes h3 {
+.project-nav__head {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.project-nav__head h1,
+.project-stage__title h2 {
   margin: 0;
   font-family: 'Songti SC', 'Noto Serif SC', 'STSong', serif;
   font-weight: 500;
 }
 
-.project-hero__title {
-  max-width: 10ch;
-  margin-top: 0.45rem;
-  font-size: clamp(3.2rem, 5.8vw, 5.5rem);
-  line-height: 1.08;
-  letter-spacing: 0.01em;
-  text-wrap: balance;
+.project-nav__head h1 {
+  font-size: clamp(1.5rem, 2vw, 1.88rem);
+  line-height: 1.1;
 }
 
-.project-hero__aside {
-  display: grid;
-  gap: 1.25rem;
-}
-
-.project-hero__body,
-.project-note,
-.project-summary span,
-.project-list p,
-.project-list small,
-.project-empty span,
-.project-footnotes p {
-  margin: 0;
-  font-size: 1rem;
-  line-height: 1.75;
+.project-nav__head span,
+.project-stage__title p,
+.project-display__caption,
+.project-cue p,
+.project-display__empty p {
   color: var(--project-copy-soft);
-  text-wrap: pretty;
 }
 
-.project-hero__tags,
-.project-stage__meta {
+.project-nav__head span {
+  font-size: var(--argus-type-meta);
+  line-height: 1.55;
+}
+
+.project-nav__groups {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.project-nav-group {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.project-nav-group__trigger,
+.project-scene-button,
+.project-switcher__button {
+  appearance: none;
+  border: none;
+  font: inherit;
+}
+
+.project-nav-group__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.project-nav-group__trigger:hover {
+  border-color: var(--project-line);
+  background: color-mix(in srgb, var(--project-surface) 72%, transparent);
+}
+
+.project-nav-group__trigger.is-open {
+  border-color: var(--project-line-strong);
+  background: color-mix(in srgb, var(--project-accent) 10%, var(--project-surface));
+}
+
+.project-nav-group__trigger span {
+  color: var(--project-title);
+  font-size: 0.97rem;
+  line-height: 1.35;
+}
+
+.project-nav-group__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.project-nav-group__trigger strong,
+.project-nav-group__trigger i {
+  color: var(--project-copy-soft);
+  font-size: var(--argus-type-meta);
+  font-weight: 500;
+}
+
+.project-nav-group__trigger i {
+  font-style: normal;
+  line-height: 1;
+}
+
+.project-nav-group__list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.project-scene-button {
+  display: grid;
+  gap: 0.2rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.85rem 0.85rem 0.9rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.project-scene-button:hover {
+  transform: translateY(-1px);
+  border-color: var(--project-line);
+  background: color-mix(in srgb, var(--project-surface) 74%, transparent);
+}
+
+.project-nav-group__trigger:focus-visible,
+.project-scene-button:focus-visible,
+.project-switcher__button:focus-visible {
+  outline: 2px solid var(--project-accent-strong);
+  outline-offset: 2px;
+}
+
+.project-scene-button.is-active {
+  border-color: var(--project-line-strong);
+  background: color-mix(in srgb, var(--project-accent) 14%, var(--project-surface));
+}
+
+.project-scene-button__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.project-scene-button strong {
+  overflow: hidden;
+  color: var(--project-title);
+  font-size: 0.98rem;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-scene-button small {
+  overflow: hidden;
+  color: var(--project-copy-soft);
+  font-size: var(--argus-type-meta);
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-scene-button__badge {
+  flex: none;
+  padding: 0.15rem 0.42rem;
+  border: 1px solid color-mix(in srgb, var(--project-accent) 58%, transparent);
+  color: var(--project-kicker);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.project-stage {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  min-width: 0;
+}
+
+.project-stage__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem 1.4rem;
+  align-items: start;
+  padding: 20px 24px 12px;
+  border-bottom: 1px solid var(--project-divider);
+}
+
+.project-stage__heading {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.project-stage__title {
+  display: grid;
+  gap: 0.42rem;
+  min-width: 0;
+}
+
+.project-stage__title h2 {
+  font-size: clamp(1.95rem, 2.6vw, 2.6rem);
+  line-height: 1.06;
+}
+
+.project-stage__title p {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.project-stage__control-panel {
+  display: grid;
+  justify-items: end;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.project-stage__browse {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: start;
+  justify-content: flex-end;
+}
+
+.project-stage__browse-button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--project-line);
+  background: transparent;
+  color: var(--project-copy);
+  font: inherit;
+  font-size: 0.84rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.project-stage__browse-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--project-line-strong);
+  background: color-mix(in srgb, var(--project-surface) 76%, transparent);
+}
+
+.project-stage__browse-button:focus-visible {
+  outline: 2px solid var(--project-accent-strong);
+  outline-offset: 2px;
+}
+
+.project-stage__browse-button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.project-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  justify-content: flex-end;
+  gap: 0.55rem 0.85rem;
+  padding: 0;
+  border-bottom: none;
 }
 
-.project-hero__tags span,
-.project-stage__meta span {
-  padding: 8px 12px;
+.project-switcher {
+  display: grid;
+  gap: 0.32rem;
+  justify-items: end;
+}
+
+.project-switcher__label {
+  color: var(--project-copy-soft);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+}
+
+.project-switcher__group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.34rem;
+  padding: 0.28rem;
+  border: 1px solid var(--project-line-strong);
+  background: color-mix(in srgb, var(--project-surface) 86%, transparent);
+}
+
+.project-switcher__button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--project-copy);
+  font-size: 0.88rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.project-switcher__button:hover {
+  transform: translateY(-1px);
+  border-color: var(--project-line);
+  background: color-mix(in srgb, var(--project-surface) 72%, transparent);
+}
+
+.project-switcher__button.is-active {
+  border-color: color-mix(in srgb, var(--project-accent) 62%, transparent);
+  background: color-mix(in srgb, var(--project-accent) 22%, var(--project-surface));
+  color: var(--project-title);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--project-accent) 18%, transparent);
+}
+
+.project-stage__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 268px;
+  gap: 16px;
+  align-items: start;
+  padding: 16px 24px 20px;
+}
+
+.project-display {
+  display: grid;
+  gap: 0.65rem;
+  min-width: 0;
+  width: min(100%, 760px);
+}
+
+.project-display__frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 5 / 4;
+  width: 100%;
+  max-height: 84vh;
+  margin-left: 24px;
+  padding: 10px;
+  border: 1px solid var(--project-line-strong);
+  background:
+    radial-gradient(circle at 50% 0%, var(--project-screen-glow), transparent 46%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--project-screen) 96%, transparent),
+      var(--project-screen)
+    );
+  overflow: hidden;
+}
+
+.project-display__frame::after {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 1px solid color-mix(in srgb, var(--project-line) 90%, transparent);
+  pointer-events: none;
+}
+
+.project-display__chips {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.project-display__chips span {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
   border: 1px solid var(--project-line);
   background: color-mix(in srgb, var(--project-surface) 84%, transparent);
   color: var(--project-copy);
   font-size: var(--argus-type-meta);
 }
 
-.project-console {
-  display: grid;
-  grid-template-columns: 316px minmax(0, 1fr) 330px;
-  border: 1px solid var(--project-line);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--project-surface) 96%, transparent), var(--project-surface));
-  box-shadow: 0 34px 90px var(--project-shadow);
-  overflow: hidden;
-}
-
-.project-side,
-.project-stage,
-.project-results {
-  min-width: 0;
-}
-
-.project-side {
-  display: grid;
-  gap: 1px;
-  background: var(--project-divider);
-}
-
-.project-side__block {
-  display: grid;
-  gap: 14px;
-  padding: 24px;
-  background: var(--project-surface);
-}
-
-.project-side__row,
-.project-list__top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.project-mini {
-  color: var(--project-copy);
-  font-size: var(--argus-type-meta);
-}
-
-.project-file {
-  display: none;
-}
-
-.project-btn,
-.project-preset,
-.project-box,
-.project-list__item {
-  appearance: none;
-  border: none;
-  font: inherit;
-}
-
-.project-btn,
-.project-preset,
-.project-list__item {
-  cursor: pointer;
-  transition: transform 0.22s ease, background 0.22s ease, border-color 0.22s ease, opacity 0.22s ease;
-}
-
-.project-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.project-btn:not(:disabled):hover,
-.project-preset:hover,
-.project-list__item:hover {
-  transform: translateY(-1px);
-}
-
-.project-btn {
-  min-height: 48px;
-  padding: 0 18px;
-}
-
-.project-btn--accent {
-  color: #101724;
-  background: linear-gradient(135deg, var(--project-accent), var(--project-accent-deep));
-}
-
-.project-btn--ghost,
-.project-btn--launch,
-.project-preset {
-  border: 1px solid var(--project-line);
-  background: transparent;
-  color: var(--project-copy);
-}
-
-.project-preset-list {
-  display: grid;
-  gap: 10px;
-}
-
-.project-preset {
-  display: grid;
-  gap: 6px;
-  padding: 14px 16px;
-  text-align: left;
-}
-
-.project-preset.is-active {
-  border-color: var(--project-line-strong);
-  background: color-mix(in srgb, var(--project-surface) 76%, transparent);
-}
-
-.project-preset strong {
-  color: var(--project-title);
-  font-size: 1rem;
-}
-
-.project-preset span {
-  color: var(--project-copy-soft);
-  font-size: var(--argus-type-meta);
-  line-height: 1.6;
-}
-
-.project-slider {
-  width: 100%;
-  accent-color: var(--project-accent);
-}
-
-.project-stage {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  border-left: 1px solid var(--project-divider);
-  border-right: 1px solid var(--project-divider);
-  background: var(--project-stage);
-}
-
-.project-stage__header {
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 26px 28px 20px;
-  border-bottom: 1px solid var(--project-divider);
-}
-
-.project-stage h2,
-.project-results h2 {
-  margin-top: 6px;
-  font-size: clamp(1.7rem, 2vw, 2.2rem);
-  line-height: 1.2;
-}
-
-.project-stage__viewer {
+.project-display__image,
+.project-display__empty {
   position: relative;
-  min-height: 560px;
-  overflow: hidden;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--project-stage) 90%, #000), color-mix(in srgb, var(--project-stage) 78%, #000));
+  z-index: 0;
 }
 
-.project-stage__image,
-.project-overlay {
-  position: absolute;
-  inset: 0;
-}
-
-.project-stage__image {
+.project-display__image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
-.project-stage__grid {
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(var(--project-grid) 1px, transparent 1px), linear-gradient(90deg, var(--project-grid) 1px, transparent 1px);
-  background-size: 72px 72px;
-  pointer-events: none;
-}
-
-.project-stage__scan {
-  position: absolute;
-  inset: -10% 0 auto;
-  height: 28%;
-  background: linear-gradient(180deg, transparent, var(--project-scan), transparent);
-  mix-blend-mode: screen;
-  animation: scan 1.15s ease-in-out infinite;
-}
-
-.project-overlay {
-  pointer-events: none;
-}
-
-.project-box {
-  position: absolute;
-  border: 1px solid var(--box-tone);
-  background: color-mix(in srgb, var(--box-tone) 12%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--box-tone) 28%, transparent);
-  pointer-events: auto;
-  cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease;
-}
-
-.project-box:hover,
-.project-box.is-active {
-  transform: scale(1.01);
-  background: color-mix(in srgb, var(--box-tone) 18%, transparent);
-}
-
-.project-box__tag {
-  position: absolute;
-  left: -1px;
-  top: -32px;
-  display: inline-flex;
-  gap: 8px;
-  padding: 6px 10px;
-  background: rgba(8, 12, 18, 0.9);
-  color: #fff7ea;
-  font-size: 0.74rem;
-  white-space: nowrap;
-}
-
-.theme-light .project-box__tag {
-  background: rgba(255, 250, 242, 0.94);
-  color: #231e16;
-}
-
-.project-stage__hint {
-  position: absolute;
-  left: 28px;
-  bottom: 24px;
+.project-display__empty {
   display: grid;
-  gap: 6px;
-  padding: 16px 18px;
-  border: 1px solid var(--project-line);
-  background: color-mix(in srgb, var(--project-surface) 86%, transparent);
-  backdrop-filter: blur(10px);
+  gap: 0.45rem;
+  max-width: 30rem;
+  padding: 2rem;
+  text-align: center;
 }
 
-.project-stage__hint p,
-.project-stage__hint span {
+.project-display__empty strong {
+  color: var(--project-title);
+  font-size: 1.1rem;
+  line-height: 1.45;
+}
+
+.project-display__empty p {
   margin: 0;
+  line-height: 1.65;
 }
 
-.project-stage__hint span {
-  color: var(--project-copy-soft);
+.project-display__caption {
+  margin: 0;
   font-size: var(--argus-type-meta);
+  line-height: 1.58;
 }
 
-.project-stage__footer {
+.project-cues {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
+  gap: 0.8rem;
+  align-content: start;
+}
+
+.project-cue {
+  display: grid;
+  gap: 0.28rem;
+  min-width: 0;
+  padding-top: 0.62rem;
   border-top: 1px solid var(--project-divider);
 }
 
-.project-stage__footer div {
-  display: grid;
-  gap: 4px;
-  padding: 18px 22px;
-}
-
-.project-stage__footer div + div {
-  border-left: 1px solid var(--project-divider);
-}
-
-.project-stage__footer span {
-  color: var(--project-copy-soft);
+.project-cue span {
+  color: var(--project-kicker);
   font-size: var(--argus-type-meta);
 }
 
-.project-stage__footer strong {
-  color: var(--project-copy);
-  font-size: 0.95rem;
-}
-
-.project-results {
-  display: grid;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
-  gap: 22px;
-  padding: 26px 24px 24px;
-  background: var(--project-surface);
-}
-
-.project-metrics {
-  display: grid;
-  gap: 1px;
+.project-cue p {
   margin: 0;
-  background: var(--project-divider);
+  font-size: 0.88rem;
+  line-height: 1.56;
 }
 
-.project-metrics div {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 16px;
-  align-items: center;
-  padding: 14px 0;
-  background: var(--project-surface);
+@media (max-width: 1280px) {
+  .project-stage__body {
+    grid-template-columns: minmax(0, 1fr) 240px;
+  }
 }
 
-.project-metrics dt {
-  color: var(--project-copy-soft);
-  font-size: var(--argus-type-meta);
-}
+@media (max-width: 1040px) {
+  .project-view {
+    padding: 22px 16px 52px;
+  }
 
-.project-metrics dd {
-  margin: 0;
-  font-family: 'Songti SC', 'Noto Serif SC', 'STSong', serif;
-  font-size: 1.4rem;
-  color: var(--project-title);
-}
-
-.project-summary {
-  display: grid;
-  gap: 8px;
-  padding-top: 2px;
-}
-
-.project-summary p,
-.project-empty p {
-  margin: 0;
-  color: var(--project-copy);
-  font-size: 0.98rem;
-  line-height: 1.55;
-}
-
-.project-list {
-  display: grid;
-  gap: 1px;
-  background: var(--project-divider);
-  overflow: auto;
-}
-
-.project-list__item {
-  display: grid;
-  gap: 8px;
-  padding: 16px 0;
-  text-align: left;
-  background: var(--project-surface);
-}
-
-.project-list__item.is-active {
-  background: color-mix(in srgb, var(--project-surface) 82%, transparent);
-}
-
-.project-list__top strong {
-  color: var(--project-title);
-  font-size: 1rem;
-}
-
-.project-list__top span,
-.project-list p {
-  color: var(--project-copy-soft);
-  font-size: var(--argus-type-meta);
-}
-
-.project-empty {
-  display: grid;
-  gap: 8px;
-}
-
-.project-footnotes {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1px;
-  background: var(--project-divider);
-}
-
-.project-footnotes article {
-  display: grid;
-  gap: 10px;
-  padding: 24px;
-  background: var(--project-surface);
-}
-
-.project-footnotes h3 {
-  font-size: 1.35rem;
-  line-height: 1.28;
-}
-
-@keyframes scan {
-  0% { transform: translateY(-18%); }
-  100% { transform: translateY(290%); }
-}
-
-@media (max-width: 1180px) {
-  .project-console {
+  .project-shell {
     grid-template-columns: 1fr;
   }
 
-  .project-stage {
-    border-left: none;
-    border-right: none;
-    border-top: 1px solid var(--project-divider);
-    border-bottom: 1px solid var(--project-divider);
-  }
-}
-
-@media (max-width: 960px) {
-  .project-hero {
+  .project-stage__head {
     grid-template-columns: 1fr;
   }
 
-  .project-hero__title {
-    max-width: 12ch;
+  .project-stage__control-panel,
+  .project-switcher {
+    justify-items: start;
   }
 
-  .project-stage__header {
-    flex-direction: column;
+  .project-toolbar,
+  .project-stage__browse {
+    justify-content: flex-start;
+  }
+
+  .project-stage__body {
+    grid-template-columns: 1fr;
+  }
+
+  .project-display {
+    width: 100%;
+  }
+
+  .project-cues {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem 1rem;
   }
 }
 
 @media (max-width: 720px) {
-  .project-view {
-    padding: 22px 16px 48px;
+  .project-stage__head,
+  .project-toolbar,
+  .project-stage__body {
+    padding-left: 18px;
+    padding-right: 18px;
   }
 
-  .project-hero__title {
-    max-width: none;
-    font-size: clamp(2.5rem, 10vw, 3.6rem);
+  .project-stage__title h2 {
+    font-size: clamp(1.8rem, 8vw, 2.4rem);
   }
 
-  .project-stage__viewer {
-    min-height: 420px;
+  .project-display__frame {
+    padding: 14px;
   }
 
-  .project-stage__footer,
-  .project-footnotes {
+  .project-display__frame::after {
+    inset: 10px;
+  }
+
+  .project-cues {
     grid-template-columns: 1fr;
-  }
-
-  .project-stage__footer div + div {
-    border-left: none;
-    border-top: 1px solid var(--project-divider);
   }
 }
 </style>

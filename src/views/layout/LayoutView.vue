@@ -15,7 +15,7 @@
         <div class="header-actions">
           <el-menu class="top-menu" mode="horizontal" :default-active="$route.path":ellipsis="false" router>
             <el-menu-item index="/research">研究展示</el-menu-item>
-            <el-menu-item index="/project">项目介绍</el-menu-item>
+            <el-menu-item index="/project">可视化</el-menu-item>
             <el-menu-item index="/team">团队成员</el-menu-item>
             <el-menu-item index="/downloads">资料下载</el-menu-item>
             <!-- <el-menu-item index="/contact">联系我们</el-menu-item> -->

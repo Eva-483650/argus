@@ -321,10 +321,9 @@ const sceneCatalog = [
     rgb_prediction: resolveSceneImage(scene.id, 'rgb_prediction.jpg'),
     x_prediction: resolveSceneImage(scene.id, 'x_prediction.jpg'),
     rgb_gt:
-      resolveSceneImage(scene.id, 'rgb_gt.jpg') ||
-      resolveSceneImage(scene.id, 'rgb_prediction.jpg'),
+      resolveSceneImage(scene.id, 'rgb_ground_truth.jpg'),
     x_gt:
-      resolveSceneImage(scene.id, 'x_gt.jpg') || resolveSceneImage(scene.id, 'x_prediction.jpg'),
+      resolveSceneImage(scene.id, 'x_ground_truth.jpg'),
   },
 }))
 

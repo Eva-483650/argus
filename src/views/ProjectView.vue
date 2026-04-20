@@ -37,7 +37,7 @@
                 :class="{ 'is-active': scene.id === selectedSceneId }"
                 type="button"
                 :aria-pressed="scene.id === selectedSceneId"
-                @click="selectedSceneId = scene.id"
+                @click="setSelectedScene(scene.id)"
               >
                 <div class="project-scene-button__top">
                   <strong>{{ scene.title }}</strong>
@@ -158,6 +158,7 @@
               <div class="project-display__chips">
                 <span>{{ currentViewLabel }}</span>
                 <span>{{ currentModalityLabel }}</span>
+                <span v-if="isAutoCycling" class="project-display__autoplay-chip">轮播预览中</span>
               </div>
 
               <template v-if="hasActiveImage">
@@ -202,6 +203,7 @@ const themeMode = computed(() => (injectedTheme.value ? 'dark' : 'light'))
 const pageRef = ref(null)
 const imageErrored = ref(false)
 let context = null
+let autoplayTimer = null
 
 const imageModules = import.meta.glob('../assets/imgs/*/*.jpg', {
   eager: true,
@@ -318,24 +320,40 @@ const sceneCatalog = [
     x_original: resolveSceneImage(scene.id, 'x_original.jpg'),
     rgb_prediction: resolveSceneImage(scene.id, 'rgb_prediction.jpg'),
     x_prediction: resolveSceneImage(scene.id, 'x_prediction.jpg'),
+    rgb_gt:
+      resolveSceneImage(scene.id, 'rgb_gt.jpg') ||
+      resolveSceneImage(scene.id, 'rgb_prediction.jpg'),
+    x_gt:
+      resolveSceneImage(scene.id, 'x_gt.jpg') || resolveSceneImage(scene.id, 'x_prediction.jpg'),
   },
 }))
 
 const viewOptions = [
   { value: 'original', label: '原始输入' },
   { value: 'prediction', label: '推理结果' },
-  { value: 'gt', label: 'GT 标准答案' },
+  { value: 'gt', label: '标准答案' },
 ]
 
 const modalityOptions = [
   { value: 'rgb', label: 'RGB' },
-  { value: 'infrared', label: '红外' },
+  { value: 'infrared', label: 'IR' },
 ]
 
 const selectedSceneId = ref('9')
 const activeView = ref('original')
 const activeModality = ref('rgb')
 const openCategoryKey = ref('complex-light')
+const isAutoCycling = ref(false)
+
+const scenePreviewSequence = [
+  { view: 'original', modality: 'rgb' },
+  { view: 'prediction', modality: 'rgb' },
+  { view: 'gt', modality: 'rgb' },
+  { view: 'original', modality: 'infrared' },
+  { view: 'prediction', modality: 'infrared' },
+  { view: 'gt', modality: 'infrared' },
+]
+const scenePreviewInterval = 1400
 
 const groupedCategories = computed(() =>
   categoryDefinitions.map((category) => ({
@@ -372,8 +390,11 @@ const currentModalityLabel = computed(
 const activeImageKey = computed(() => {
   if (activeView.value === 'original' && activeModality.value === 'rgb') return 'rgb_original'
   if (activeView.value === 'original' && activeModality.value === 'infrared') return 'x_original'
-  if (activeModality.value === 'rgb') return 'rgb_prediction'
-  return 'x_prediction'
+  if (activeView.value === 'prediction' && activeModality.value === 'rgb') return 'rgb_prediction'
+  if (activeView.value === 'prediction' && activeModality.value === 'infrared')
+    return 'x_prediction'
+  if (activeModality.value === 'rgb') return 'rgb_gt'
+  return 'x_gt'
 })
 
 const activeImageSrc = computed(() => currentScene.value.assets[activeImageKey.value] || '')
@@ -396,7 +417,7 @@ const activeImageCaption = computed(() => {
     return `当前显示 ${currentModalityLabel.value} 推理结果，用于观察模型在该场景下的输出表现。`
   }
 
-  return `当前显示 ${currentModalityLabel.value} GT 标准答案，用于答辩过程中的结果对照。`
+  return `当前显示 ${currentModalityLabel.value} GT 标准答案，用于结果对照。`
 })
 
 const cueItems = computed(() => [
@@ -420,8 +441,67 @@ const cueItems = computed(() => [
 
 watch([selectedSceneId, activeView, activeModality], () => {
   imageErrored.value = false
-  openCategoryKey.value = currentScene.value.categoryKey
 })
+
+watch(
+  selectedSceneId,
+  () => {
+    openCategoryKey.value = currentScene.value.categoryKey
+    startScenePreview()
+  },
+  { immediate: true },
+)
+
+function clearScenePreviewTimer() {
+  if (!autoplayTimer) return
+  window.clearTimeout(autoplayTimer)
+  autoplayTimer = null
+}
+
+function stopScenePreview() {
+  clearScenePreviewTimer()
+  isAutoCycling.value = false
+}
+
+function startScenePreview() {
+  stopScenePreview()
+  isAutoCycling.value = true
+
+  let stepIndex = 0
+
+  const advance = () => {
+    const step = scenePreviewSequence[stepIndex]
+
+    if (!step) {
+      stopScenePreview()
+      return
+    }
+
+    activeView.value = step.view
+    activeModality.value = step.modality
+
+    if (stepIndex === scenePreviewSequence.length - 1) {
+      autoplayTimer = window.setTimeout(() => {
+        stopScenePreview()
+      }, scenePreviewInterval)
+      return
+    }
+
+    stepIndex += 1
+    autoplayTimer = window.setTimeout(advance, scenePreviewInterval)
+  }
+
+  advance()
+}
+
+function setSelectedScene(sceneId) {
+  if (selectedSceneId.value === sceneId) {
+    startScenePreview()
+    return
+  }
+
+  selectedSceneId.value = sceneId
+}
 
 function compactTags(tags) {
   return tags.slice(0, 2).join(' / ')
@@ -433,19 +513,21 @@ function setOpenCategory(value) {
 
 function goToPreviousScene() {
   if (!hasPreviousScene.value) return
-  selectedSceneId.value = sceneCatalog[currentSceneIndex.value - 1].id
+  setSelectedScene(sceneCatalog[currentSceneIndex.value - 1].id)
 }
 
 function goToNextScene() {
   if (!hasNextScene.value) return
-  selectedSceneId.value = sceneCatalog[currentSceneIndex.value + 1].id
+  setSelectedScene(sceneCatalog[currentSceneIndex.value + 1].id)
 }
 
 function setActiveView(value) {
+  stopScenePreview()
   activeView.value = value
 }
 
 function setActiveModality(value) {
+  stopScenePreview()
   activeModality.value = value
 }
 
@@ -504,6 +586,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  stopScenePreview()
   context?.revert()
 })
 </script>
@@ -963,6 +1046,12 @@ onBeforeUnmount(() => {
   background: color-mix(in srgb, var(--project-surface) 84%, transparent);
   color: var(--project-copy);
   font-size: var(--argus-type-meta);
+}
+
+.project-display__autoplay-chip {
+  border-color: color-mix(in srgb, var(--project-accent) 56%, transparent);
+  background: color-mix(in srgb, var(--project-accent) 18%, var(--project-surface));
+  color: var(--project-title);
 }
 
 .project-display__image,

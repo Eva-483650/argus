@@ -162,10 +162,21 @@
               </div>
 
               <template v-if="hasActiveImage">
+                <div
+                  v-if="isImageLoading"
+                  class="project-display__loading"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <span class="project-display__spinner" aria-hidden="true"></span>
+                  <span>图像加载中</span>
+                </div>
                 <img
                   class="project-display__image"
+                  :class="{ 'is-loaded': imageLoaded }"
                   :src="activeImageSrc"
                   :alt="activeImageAlt"
+                  @load="handleImageLoad"
                   @error="handleImageError"
                 />
               </template>
@@ -202,8 +213,12 @@ const themeMode = computed(() => (injectedTheme.value ? 'dark' : 'light'))
 
 const pageRef = ref(null)
 const imageErrored = ref(false)
+const imageLoaded = ref(false)
+const isAutoCycling = ref(false)
 let context = null
 let autoplayTimer = null
+let previewSessionToken = 0
+let previewStepIndex = 0
 
 const imageModules = import.meta.glob('../assets/imgs/*/*.jpg', {
   eager: true,
@@ -320,10 +335,8 @@ const sceneCatalog = [
     x_original: resolveSceneImage(scene.id, 'x_original.jpg'),
     rgb_prediction: resolveSceneImage(scene.id, 'rgb_prediction.jpg'),
     x_prediction: resolveSceneImage(scene.id, 'x_prediction.jpg'),
-    rgb_gt:
-      resolveSceneImage(scene.id, 'rgb_ground_truth.jpg'),
-    x_gt:
-      resolveSceneImage(scene.id, 'x_ground_truth.jpg'),
+    rgb_gt: resolveSceneImage(scene.id, 'rgb_ground_truth.jpg'),
+    x_gt: resolveSceneImage(scene.id, 'x_ground_truth.jpg'),
   },
 }))
 
@@ -342,7 +355,6 @@ const selectedSceneId = ref('9')
 const activeView = ref('original')
 const activeModality = ref('rgb')
 const openCategoryKey = ref('complex-light')
-const isAutoCycling = ref(false)
 
 const scenePreviewSequence = [
   { view: 'original', modality: 'rgb' },
@@ -352,7 +364,8 @@ const scenePreviewSequence = [
   { view: 'prediction', modality: 'infrared' },
   { view: 'gt', modality: 'infrared' },
 ]
-const scenePreviewInterval = 1400
+// 每张图在轮播中的停留时间，单位毫秒。
+const scenePreviewIntervalMs = 2000
 
 const groupedCategories = computed(() =>
   categoryDefinitions.map((category) => ({
@@ -386,18 +399,22 @@ const currentModalityLabel = computed(
   () => modalityOptions.find((option) => option.value === activeModality.value)?.label ?? '',
 )
 
-const activeImageKey = computed(() => {
-  if (activeView.value === 'original' && activeModality.value === 'rgb') return 'rgb_original'
-  if (activeView.value === 'original' && activeModality.value === 'infrared') return 'x_original'
-  if (activeView.value === 'prediction' && activeModality.value === 'rgb') return 'rgb_prediction'
-  if (activeView.value === 'prediction' && activeModality.value === 'infrared')
-    return 'x_prediction'
-  if (activeModality.value === 'rgb') return 'rgb_gt'
+function resolveAssetKey(view, modality) {
+  if (view === 'original' && modality === 'rgb') return 'rgb_original'
+  if (view === 'original' && modality === 'infrared') return 'x_original'
+  if (view === 'prediction' && modality === 'rgb') return 'rgb_prediction'
+  if (view === 'prediction' && modality === 'infrared') return 'x_prediction'
+  if (modality === 'rgb') return 'rgb_gt'
   return 'x_gt'
-})
+}
+
+const activeImageKey = computed(() => resolveAssetKey(activeView.value, activeModality.value))
 
 const activeImageSrc = computed(() => currentScene.value.assets[activeImageKey.value] || '')
 const hasActiveImage = computed(() => Boolean(activeImageSrc.value) && !imageErrored.value)
+const isImageLoading = computed(
+  () => Boolean(activeImageSrc.value) && !imageErrored.value && !imageLoaded.value,
+)
 
 const activeImageAlt = computed(
   () => `${currentScene.value.title} ${currentViewLabel.value} ${currentModalityLabel.value}`,
@@ -438,8 +455,16 @@ const cueItems = computed(() => [
   },
 ])
 
-watch([selectedSceneId, activeView, activeModality], () => {
+watch(activeImageSrc, (nextSrc, previousSrc) => {
   imageErrored.value = false
+  if (!nextSrc) {
+    imageLoaded.value = false
+    return
+  }
+
+  if (nextSrc !== previousSrc) {
+    imageLoaded.value = false
+  }
 })
 
 watch(
@@ -457,40 +482,66 @@ function clearScenePreviewTimer() {
   autoplayTimer = null
 }
 
+function scheduleScenePreviewAdvance(sessionToken) {
+  if (!isAutoCycling.value || sessionToken !== previewSessionToken) return
+
+  clearScenePreviewTimer()
+
+  autoplayTimer = window.setTimeout(() => {
+    if (!isAutoCycling.value || sessionToken !== previewSessionToken) return
+
+    if (previewStepIndex >= scenePreviewSequence.length - 1) {
+      stopScenePreview()
+      return
+    }
+
+    previewStepIndex += 1
+    runScenePreviewStep(sessionToken)
+  }, scenePreviewIntervalMs)
+}
+
 function stopScenePreview() {
   clearScenePreviewTimer()
   isAutoCycling.value = false
 }
 
-function startScenePreview() {
-  stopScenePreview()
-  isAutoCycling.value = true
+function runScenePreviewStep(sessionToken) {
+  if (!isAutoCycling.value || sessionToken !== previewSessionToken) return
 
-  let stepIndex = 0
+  const step = scenePreviewSequence[previewStepIndex]
 
-  const advance = () => {
-    const step = scenePreviewSequence[stepIndex]
-
-    if (!step) {
-      stopScenePreview()
-      return
-    }
-
-    activeView.value = step.view
-    activeModality.value = step.modality
-
-    if (stepIndex === scenePreviewSequence.length - 1) {
-      autoplayTimer = window.setTimeout(() => {
-        stopScenePreview()
-      }, scenePreviewInterval)
-      return
-    }
-
-    stepIndex += 1
-    autoplayTimer = window.setTimeout(advance, scenePreviewInterval)
+  if (!step) {
+    stopScenePreview()
+    return
   }
 
-  advance()
+  const nextImageSrc = currentScene.value.assets[resolveAssetKey(step.view, step.modality)] || ''
+  const isSameImage = nextImageSrc === activeImageSrc.value
+
+  imageErrored.value = false
+  if (!isSameImage) {
+    imageLoaded.value = false
+  }
+
+  activeView.value = step.view
+  activeModality.value = step.modality
+
+  if (!nextImageSrc) {
+    scheduleScenePreviewAdvance(sessionToken)
+    return
+  }
+
+  if (isSameImage && imageLoaded.value) {
+    scheduleScenePreviewAdvance(sessionToken)
+  }
+}
+
+function startScenePreview() {
+  stopScenePreview()
+  previewSessionToken += 1
+  previewStepIndex = 0
+  isAutoCycling.value = true
+  runScenePreviewStep(previewSessionToken)
 }
 
 function setSelectedScene(sceneId) {
@@ -530,8 +581,21 @@ function setActiveModality(value) {
   activeModality.value = value
 }
 
+function handleImageLoad() {
+  imageLoaded.value = true
+
+  if (isAutoCycling.value) {
+    scheduleScenePreviewAdvance(previewSessionToken)
+  }
+}
+
 function handleImageError() {
   imageErrored.value = true
+  imageLoaded.value = false
+
+  if (isAutoCycling.value) {
+    scheduleScenePreviewAdvance(previewSessionToken)
+  }
 }
 
 function handleSwitcherKeydown(event, options, currentValue, setter) {
@@ -1063,6 +1127,38 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.24s ease;
+}
+
+.project-display__image.is-loaded {
+  opacity: 1;
+}
+
+.project-display__loading {
+  position: absolute;
+  inset: auto auto 18px 18px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 38px;
+  padding: 0 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--project-accent) 34%, transparent);
+  background: color-mix(in srgb, var(--project-surface) 90%, transparent);
+  color: var(--project-title);
+  font-size: var(--argus-type-meta);
+  line-height: 1;
+  backdrop-filter: blur(8px);
+}
+
+.project-display__spinner {
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 2px solid color-mix(in srgb, var(--project-accent) 22%, transparent);
+  border-top-color: var(--project-accent);
+  border-radius: 999px;
+  animation: project-spin 0.8s linear infinite;
 }
 
 .project-display__empty {
@@ -1114,6 +1210,12 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: 0.88rem;
   line-height: 1.56;
+}
+
+@keyframes project-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 1280px) {
@@ -1181,6 +1283,21 @@ onBeforeUnmount(() => {
 
   .project-cues {
     grid-template-columns: 1fr;
+  }
+
+  .project-display__loading {
+    left: 14px;
+    bottom: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-display__image {
+    transition: none;
+  }
+
+  .project-display__spinner {
+    animation: none;
   }
 }
 </style>

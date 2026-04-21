@@ -11,7 +11,6 @@
 
           <p class="downloads-hero__intro">
             RegisterMM 当前作为项目的官方公开仓库页面，对外提供方法概览、定性可视化结果与项目说明。
-            完整仓库内容，包括训练代码、推理代码、检查点和评测脚本，将在论文接收后统一发布。
           </p>
         </div>
 
@@ -27,10 +26,10 @@
           <p class="downloads-kicker">Repository Access</p>
           <h2 id="downloads-access-title" class="downloads-section-title">GitHub 仓库入口</h2>
           <p class="downloads-body">
-            该页面现已改为指向 RegisterMM 的官方仓库。当前公开内容以研究展示和方法说明为主，
+            当前公开内容以研究展示和方法说明为主，
             适合快速了解课题方向、核心模块组成和阶段性发布范围。
           </p>
-          <p class="downloads-brief__status">{{ repositoryStatus }}</p>
+          <!-- <p class="downloads-brief__status">{{ repositoryStatus }}</p> -->
         </div>
 
         <div class="downloads-brief__aside">
@@ -56,7 +55,7 @@
           </p>
           <p class="downloads-body">
             页面重点不是提供完整复现环境，而是先公开方法框架、代表性可视化与项目摘要，
-            让读者在论文正式接收前先建立对整体技术路线的理解。
+            让读者先建立对整体技术路线的理解。
           </p>
         </article>
 
@@ -64,8 +63,7 @@
           <p class="downloads-kicker">Release Status</p>
           <h2 class="downloads-section-title">已公开与后续发布</h2>
           <p class="downloads-body downloads-editorial__summary">
-            当前仓库承担的是公开说明页角色，适合先看方法与样例；真正用于训练、推理和评测的完整工程，
-            会在论文接收后再统一开放。
+            当前仓库承担的是公开说明页角色，适合先看方法与样例。
           </p>
 
           <div class="downloads-release">
@@ -86,16 +84,14 @@
         </article>
       </section>
 
-
-
       <section class="downloads-method" aria-labelledby="downloads-method-title">
         <div class="downloads-method__head">
           <p class="downloads-kicker">Method Overview</p>
           <h2 id="downloads-method-title" class="downloads-section-title">RegisterMM 方法流程</h2>
-          <p class="downloads-body downloads-method__intro">
+          <!-- <p class="downloads-body downloads-method__intro">
             由于当前页面未附原始总览图，这里用结构化流程段落把论文中的主干思路展开，
             方便在站内快速阅读。
-          </p>
+          </p> -->
         </div>
 
         <ol class="downloads-method__flow" aria-label="method pipeline">
@@ -452,6 +448,7 @@ onBeforeUnmount(() => {
 
 .downloads-hero__subtitle {
   margin: 0;
+  padding-top: 10px;
   color: var(--downloads-copy-soft);
   font-size: clamp(1rem, 2vw, 1.25rem);
   line-height: 1.6;

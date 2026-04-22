@@ -28,3 +28,7 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+
+# Local tooling and raw source media
+/tools/
+/src/assets/video/projectvideo.mp4

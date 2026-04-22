@@ -324,10 +324,10 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0 0 auto 0;
   height: min(44vw, 28rem);
-  background:
+  /* background:
     radial-gradient(circle at 16% 0%, var(--downloads-glow), transparent 60%),
     radial-gradient(circle at 88% 8%, var(--downloads-glow-soft), transparent 52%);
-  pointer-events: none;
+  pointer-events: none; */
 }
 
 .theme-dark.downloads-view {

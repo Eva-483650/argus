@@ -51,13 +51,13 @@
               :poster="demoVideo.poster || undefined"
               controls
               playsinline
-              preload="metadata"
+              preload="auto"
             ></video>
 
             <div v-else class="demo-video-frame__placeholder">
-              <span class="demo-video-frame__badge">演示视频占位</span>
-              <p class="demo-video-frame__hint">请在这里放入最终评测视频，便于评审在完整驾驶序列中验证方法效果。</p>
-              <code class="demo-video-frame__path">/videos/drone-demo.mp4</code>
+              <span class="demo-video-frame__badge">项目介绍视频占位</span>
+              <p class="demo-video-frame__hint">请在这里放入项目介绍视频，便于集中展示研究背景、方法流程与实验结果。</p>
+              <code class="demo-video-frame__path">@/assets/video/projectvideo_balanced.mp4</code>
             </div>
           </div>
         </template>
@@ -71,6 +71,7 @@ import { computed, defineAsyncComponent, inject, onBeforeUnmount, ref } from 'vu
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import StorySection from './drone-showcase/StorySection.vue'
+import demoVideoSrc from '@/assets/video/projectvideo_balanced.mp4'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -86,7 +87,7 @@ const themeMode = computed(() => (injectedTheme.value ? 'dark' : 'light'))
 const pageRef = ref(null)
 const currentSection = ref('section-launch')
 const demoVideo = {
-  src: '',
+  src: demoVideoSrc,
   poster: '',
 }
 
@@ -94,52 +95,52 @@ const sections = [
   {
     id: 'section-launch',
     nav: '01',
-    backgroundLabel: 'Overview',
-    label: '概览',
-    eyebrow: '研究价值',
-    title: 'Argus 聚焦于在恶劣天气与低可见度条件下最难被检测到的交通小目标。',
+    backgroundLabel: 'Research',
+    label: '研究',
+    eyebrow: '研究背景',
+    title: 'RegisterBridgeMM 面向全天候交通场景中的无人机视角多模态小目标实时检测。',
     description:
-      '本项目面向全天候交通场景中的多模态小目标检测。降雨、雾霾、眩光、弱光以及运动模糊都会显著削弱远距离或弱特征目标的可见性。\n\n对于评审而言，关键不在于界面是否足够炫目，而在于系统是否真正解决了有意义的感知问题。Argus 首先围绕这一核心展开：当视觉证据不完整、不稳定，甚至被场景噪声淹没时，仍然保持可靠检测。',
-    caption: '问题定义 / 评审语境 / 任务意义',
+      '项目聚焦智慧交通中的高空巡检与道路监测任务。无人机能够快速覆盖大范围路网，但在高空俯视视角下，车辆、行人和非机动车通常只占少量像素；夜间、低照度、雾霾和阴雨等条件又会削弱可见光成像质量，密集交通流中的遮挡进一步提升了检测难度。\n\n研究目标是在受限计算预算下，同时解决小目标尺度小、模态信息退化和复杂场景遮挡三类问题，为交通巡检、夜间道路监测和复杂天气条件下的目标感知提供稳定的实时检测能力。',
+    caption: '应用背景 / 核心问题 / 研究目标',
     align: 'right',
     variant: 'hero',
     metrics: [
-      { value: '全天候', label: '目标场景' },
-      { value: '小目标', label: '核心挑战' },
+      { value: '全天候交通', label: '应用场景' },
+      { value: '无人机视角', label: '感知视角' },
     ],
   },
   {
     id: 'section-detail',
     nav: '02',
-    backgroundLabel: 'Method',
-    label: '方法',
-    eyebrow: '技术路线',
-    title: '该方法融合多种感知线索，使检测不再依赖单一且脆弱的视觉输入。',
+    backgroundLabel: 'Architecture',
+    label: '架构',
+    eyebrow: '方法设计',
+    title: '双流冻结视觉基础模型与 Register Token 桥接机制构成了 RegisterBridgeMM 的核心路径。',
     description:
-      'Argus 被设计为一条多模态感知流程。面对不断变化的天气条件，系统不再单独依赖某一路摄像头画面，而是对齐并联合利用互补信号，以恢复那些特征微弱、局部遮挡或容易被背景噪声淹没的小目标。\n\n这一部分应帮助评审快速理解项目贡献：重点在于鲁棒性、融合策略，以及恶劣交通环境下的感知能力，而不仅仅是一个经过包装的 3D 展示界面。这一部分应帮助评审快速理解项目贡献：重点在于鲁棒性、融合策略，以及恶劣交通环境下的感知能力，而不仅仅是一个经过包装的 3D 展示界面。这一部分应帮助评审快速理解项目贡献：重点在于鲁棒性、融合策略，以及恶劣交通环境下的感知能力，而不仅仅是一个经过包装的 3D 展示界面。',
-    caption: '多模态融合 / 鲁棒性策略 / 技术贡献',
+      '方法以 RGB 与红外双流冻结视觉基础模型为主干，在中间层利用 Register Token 建立低成本、对等的跨模态通信。RWPR 与 RCRS 负责跨模态信息交换与质量控制，在避免全 patch 级交叉注意力高开销的同时，尽可能保留预训练表征能力。\n\n在特征融合阶段，模型结合独立空间先验分支、residual-concat 多尺度融合以及 RG-PADI 小目标自适应细节注入策略，对小目标密集区域增强结构细节、对大面积背景抑制无效放大，从而兼顾融合有效性、小目标判别能力与实时部署需求。',
+    caption: '双流冻结骨干 / Register 桥接 / 小目标增强',
     align: 'left',
     variant: 'method',
     metrics: [
-      { value: '多模态', label: '输入策略' },
-      { value: '鲁棒性', label: '设计优先级' },
+      { value: 'Register Token', label: '桥接载体' },
+      { value: 'RG-PADI', label: '细节注入策略' },
     ],
   },
   {
     id: 'section-emotion',
     nav: '03',
-    backgroundLabel: 'Outcome',
+    backgroundLabel: 'Results',
     label: '结果',
-    eyebrow: '评估重点',
-    title: '最终评审真正关注的是：当场景变得复杂时，系统是否依然可信。',
+    eyebrow: '实验表现',
+    title: '实验结果表明，该框架在检测精度、鲁棒性与实时性之间取得了稳定平衡。',
     description:
-      '结果应当基于证据来判断：目标恢复是否更清晰、恶劣天气下的感知是否更稳定，以及在漏检代价真实存在的交通场景中是否具备更高应用价值。\n\n叙事的最后一段应让评审形成明确结论。Argus 不只是一个概念演示，而是一套面向传统方法最不可靠条件下、专门提升检测可信度的研究系统。叙事的最后一段应让评审形成明确结论。Argus 不只是一个概念演示，而是一套面向传统方法最不可靠条件下、专门提升检测可信度的研究系统。叙事的最后一段应让评审形成明确结论。Argus 不只是一个概念演示，而是一套面向传统方法最不可靠条件下、专门提升检测可信度的研究系统。叙事的最后一段应让评审形成明确结论。Argus 不只是一个概念演示，而是一套面向传统方法最不可靠条件下、专门提升检测可信度的研究系统。叙事的最后一段应让评审形成明确结论。Argus 不只是一个概念演示，而是一套面向传统方法最不可靠条件下、专门提升检测可信度的研究系统。',
-    caption: '预期证据 / 应用价值 / 最终结论',
+      'RegisterBridgeMM 在 DroneVehicle、LLVIP、FLIR-Aligned 和 M3FD 等公开数据集上均取得稳定且具有竞争力的性能。其中，在 DroneVehicle 数据集上达到 80.4% 的 mAP@0.5 和 61.3% 的 mAP@0.5:0.95，并在单张 RTX 4090 上实现 16.8 FPS 的推理速度。\n\n这些结果说明，方法不仅能有效挖掘 RGB 与红外模态的互补信息，也具备面向真实交通业务的工程可用性，可服务于无人机交通巡检、重点路段车流统计、夜间道路监管和复杂天气下的目标感知。',
+    caption: '公开数据集 / 关键指标 / 应用价值',
     align: 'right',
     variant: 'outcome',
     metrics: [
-      { value: '交通场景', label: '应用领域' },
-      { value: '可靠检测', label: '评审标准' },
+      { value: '80.4%', label: 'DroneVehicle mAP@0.5' },
+      { value: '16.8 FPS', label: 'RTX 4090 推理速度' },
     ],
   },
 ]
@@ -147,13 +148,13 @@ const sections = [
 const demoAct = {
   id: 'section-demo-video',
   nav: '04',
-  backgroundLabel: 'Demo',
-  label: '演示',
-  eyebrow: '系统证据',
-  caption: '完整序列验证 / 多模态流程 / 评审证据层',
-  title: '在完整交通序列中查看整套流程的实际运行效果。',
+  backgroundLabel: 'Video',
+  label: '视频',
+  eyebrow: '项目介绍视频',
+  caption: '研究概述 / 方法演示 / 结果说明',
+  title: 'RegisterBridgeMM项目介绍',
   description:
-    '这一部分应将前面的叙事转化为可验证证据。请在这里展示端到端运行过程，包括多模态输入、恶劣天气下的系统表现、小目标恢复效果，以及真实驾驶场景中的响应过程，让评审能够直接检查结果。',
+    '用于展示 RegisterBridgeMM 的任务背景、核心模块、检测效果与应用场景。',
   align: 'left',
   variant: 'demo',
 }

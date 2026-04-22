@@ -68,6 +68,9 @@
 import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import member1Photo from '@/assets/memphoto/member1.jpg'
+import member2Photo from '@/assets/memphoto/member2.jpg'
+import member3Photo from '@/assets/memphoto/member4.jpg'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -83,7 +86,7 @@ const members = [
     index: '01',
     name: '王子安',
     role: '项目负责人 / 算法设计',
-    photo: '' ,
+    photo: member1Photo,
     bio: '负责整体技术路线设计与核心算法方案统筹，围绕多模态融合与小目标检测开展问题建模，推进关键机制设计、模块协同与整体方案落地。在RGB-T目标检测领域一作发表ccf-B会议论文一篇。',
     focus: '多模态融合建模、小目标检测机制设计、整体技术路线统筹。',
     note: '在团队中承担方案总控角色，负责连接问题定义、方法设计与最终交付表达。',
@@ -93,7 +96,7 @@ const members = [
     index: '02',
     name: '梁航川',
     role: '工程实现 / 实验推进',
-    photo: '',
+    photo: member2Photo,
     bio: '负责模型训练、实验调试与结果复现，稳定推进主实验、消融实验与可视化验证，保障实验链路可靠闭环，并为方案优化提供可追溯依据。',
     focus: '模型训练流程、实验复现与消融验证、结果可视化分析。',
     note: '重点保障实验稳定性与结果可信度，为不同方案之间的对比评估提供支撑。',
@@ -103,7 +106,7 @@ const members = [
     index: '03',
     name: '陈悦华',
     role: '网站搭建 / 方案整合',
-    photo: '',
+    photo: member3Photo,
     bio: '负责项目网站搭建、技术内容整合与展示呈现，将复杂方法逻辑梳理为清晰统一的页面结构与答辩表达，提升整体呈现的完整性与说服力。',
     focus: '页面架构设计、技术内容整合、方案叙事与展示表达。',
     note: '负责将研究成果转化为对外展示材料，强化项目表达的一致性与沟通效率。',

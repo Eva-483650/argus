@@ -5,7 +5,7 @@
         <header class="project-nav__head">
           <p class="project-kicker">场景导航</p>
           <h1>场景模板</h1>
-          <span>默认从推荐场景开始，点击左侧样例切换展示内容。</span>
+          <span>默认优先展示视频样例，点击左侧场景切换展示内容。</span>
         </header>
 
         <div class="project-nav__groups">
@@ -41,7 +41,7 @@
               >
                 <div class="project-scene-button__top">
                   <strong>{{ scene.title }}</strong>
-                  <span v-if="scene.isFeatured" class="project-scene-button__badge"> 推荐 </span>
+                  <span v-if="scene.badge" class="project-scene-button__badge"> {{ scene.badge }} </span>
                 </div>
                 <small>{{ compactTags(scene.tags) }}</small>
               </button>
@@ -87,10 +87,12 @@
                   class="project-switcher__group"
                   role="tablist"
                   aria-label="内容视图"
-                  @keydown="handleSwitcherKeydown($event, viewOptions, activeView, setActiveView)"
+                  @keydown="
+                    handleSwitcherKeydown($event, availableViewOptions, activeView, setActiveView)
+                  "
                 >
                   <button
-                    v-for="option in viewOptions"
+                    v-for="option in availableViewOptions"
                     :key="option.value"
                     class="project-switcher__button"
                     :class="{ 'is-active': activeView === option.value }"
@@ -158,37 +160,58 @@
               <div class="project-display__chips">
                 <span>{{ currentViewLabel }}</span>
                 <span>{{ currentModalityLabel }}</span>
+                <span v-if="isActiveVideo">自动播放视频</span>
                 <span v-if="isAutoCycling" class="project-display__autoplay-chip">轮播预览中</span>
               </div>
 
-              <template v-if="hasActiveImage">
+              <template v-if="hasActiveMedia">
                 <div
-                  v-if="isImageLoading"
+                  v-if="isMediaLoading"
                   class="project-display__loading"
                   role="status"
                   aria-live="polite"
                 >
                   <span class="project-display__spinner" aria-hidden="true"></span>
-                  <span>图像加载中</span>
+                  <span>{{ mediaLoadingLabel }}</span>
                 </div>
+                <video
+                  v-if="isActiveVideo"
+                  :key="activeMediaSrc"
+                  ref="activeVideoRef"
+                  class="project-display__video"
+                  :class="{ 'is-loaded': mediaLoaded }"
+                  :src="activeMediaSrc"
+                  autoplay
+                  muted
+                  loop
+                  playsinline
+                  preload="auto"
+                  @loadstart="handleVideoLoadStart"
+                  @canplay="handleVideoCanPlay"
+                  @playing="handleVideoPlaying"
+                  @waiting="handleVideoWaiting"
+                  @stalled="handleVideoWaiting"
+                  @error="handleMediaError"
+                ></video>
                 <img
+                  v-else
                   class="project-display__image"
-                  :class="{ 'is-loaded': imageLoaded }"
-                  :src="activeImageSrc"
-                  :alt="activeImageAlt"
-                  @load="handleImageLoad"
-                  @error="handleImageError"
+                  :class="{ 'is-loaded': mediaLoaded }"
+                  :src="activeMediaSrc"
+                  :alt="activeMediaAlt"
+                  @load="handleMediaLoad"
+                  @error="handleMediaError"
                 />
               </template>
 
               <div v-else class="project-display__empty" role="status" aria-live="polite">
-                <strong>当前图像暂不可用</strong>
-                <p>请切换其他场景或其他视图继续查看演示内容。</p>
+                <strong>当前媒体暂不可用</strong>
+                <p>请切换其他场景、其他视图或其他模态继续查看演示内容。</p>
               </div>
             </div>
 
             <figcaption class="project-display__caption">
-              {{ activeImageCaption }}
+              {{ activeMediaCaption }}
             </figcaption>
           </figure>
 
@@ -212,21 +235,30 @@ const injectedTheme = inject('argusTheme', ref(true))
 const themeMode = computed(() => (injectedTheme.value ? 'dark' : 'light'))
 
 const pageRef = ref(null)
-const imageErrored = ref(false)
-const imageLoaded = ref(false)
+const activeVideoRef = ref(null)
+const mediaErrored = ref(false)
+const mediaLoaded = ref(false)
+const videoBuffering = ref(false)
 const isAutoCycling = ref(false)
 let context = null
 let autoplayTimer = null
+let bufferingTimer = null
 let previewSessionToken = 0
 let previewStepIndex = 0
 
-const imageModules = import.meta.glob('../assets/imgs/*/*.jpg', {
-  eager: true,
-  import: 'default',
-})
+const mediaModules = {
+  ...import.meta.glob('../assets/imgs/*/*.jpg', {
+    eager: true,
+    import: 'default',
+  }),
+  ...import.meta.glob('../assets/imgs/*/*.mp4', {
+    eager: true,
+    import: 'default',
+  }),
+}
 
-function resolveSceneImage(folder, file) {
-  return imageModules[`../assets/imgs/${folder}/${file}`] ?? ''
+function resolveSceneMedia(folder, file) {
+  return mediaModules[`../assets/imgs/${folder}/${file}`] ?? ''
 }
 
 const categoryDefinitions = [
@@ -235,6 +267,15 @@ const categoryDefinitions = [
   { key: 'weather-hard', title: '恶劣天气场景' },
   { key: 'far-small', title: '远距小目标场景' },
 ]
+
+const defaultAssetFiles = {
+  rgb_original: 'rgb_original.jpg',
+  x_original: 'x_original.jpg',
+  rgb_prediction: 'rgb_prediction.jpg',
+  x_prediction: 'x_prediction.jpg',
+  rgb_gt: 'rgb_ground_truth.jpg',
+  x_gt: 'x_ground_truth.jpg',
+}
 
 const sceneCatalog = [
   {
@@ -328,15 +369,83 @@ const sceneCatalog = [
     performance: '能够体现模型对极端照明条件的适应能力。',
     isFeatured: true,
   },
+  {
+    id: '10',
+    title: '夜间主干道视频样例',
+    categoryKey: 'complex-light',
+    tags: ['夜间', '低照度', '车灯干扰'],
+    summary: '夜间城市主干道中的连续车流与多目标场景。',
+    challenge: '局部强光、车灯干扰与明暗不均同时存在，排队车流连续出现。',
+    targets: '以主干道车流中的多目标车辆为主，适合观察连续时序中的检测稳定性。',
+    performance: '用于展示 RGB 与 IR 原始视频及对应推理结果的连续对照效果。',
+    mediaType: 'video',
+    badge: '视频',
+    isFeatured: true,
+    assetFiles: {
+      rgb_original: 'rgb_original_stage.mp4',
+      x_original: 'x_original_stage.mp4',
+      rgb_prediction: 'rgb_prediction_stage.mp4',
+      x_prediction: 'x_prediction_stage.mp4',
+    },
+  },
+  {
+    id: '11',
+    title: '跨江大桥远距视频样例',
+    categoryKey: 'far-small',
+    tags: ['白天', '轻雾感', '远距车辆'],
+    summary: '跨江大桥上的长距离道路与远距小目标车辆场景。',
+    challenge: '低对比度与轻雾感并存，远距车辆沿长距离道路稀疏分布。',
+    targets: '以远距车辆和长距离道路中的小目标为主，适合观察连续远距检出表现。',
+    performance: '用于展示模型在低对比度远距场景下的连续检出稳定性。',
+    mediaType: 'video',
+    badge: '视频',
+    assetFiles: {
+      rgb_original: 'rgb_original_stage.mp4',
+      x_original: 'x_original_stage.mp4',
+      rgb_prediction: 'rgb_prediction_stage.mp4',
+      x_prediction: 'x_prediction_stage.mp4',
+    },
+  },
+  {
+    id: '12',
+    title: '高空俯视道路视频样例',
+    categoryKey: 'far-small',
+    tags: ['白天', '高空俯视', '分散车流'],
+    summary: '高空俯视下的城市道路远距车流与多目标场景。',
+    challenge: '目标尺寸小、分散度高，开阔背景容易稀释前景细节。',
+    targets: '以分散车流中的远距车辆与多目标为主，适合观察高空俯视下的小目标表现。',
+    performance: '用于展示原始输入与推理结果在高空俯视场景中的连续对比效果。',
+    mediaType: 'video',
+    badge: '视频',
+    assetFiles: {
+      rgb_original: 'rgb_original_stage.mp4',
+      x_original: 'x_original_stage.mp4',
+      rgb_prediction: 'rgb_prediction_stage.mp4',
+      x_prediction: 'x_prediction_stage.mp4',
+    },
+  },
 ].map((scene) => ({
   ...scene,
+  mediaType: scene.mediaType ?? 'image',
+  availableViews:
+    scene.mediaType === 'video' ? ['original', 'prediction'] : ['original', 'prediction', 'gt'],
+  badge: scene.badge ?? (scene.isFeatured ? '推荐' : ''),
   assets: {
-    rgb_original: resolveSceneImage(scene.id, 'rgb_original.jpg'),
-    x_original: resolveSceneImage(scene.id, 'x_original.jpg'),
-    rgb_prediction: resolveSceneImage(scene.id, 'rgb_prediction.jpg'),
-    x_prediction: resolveSceneImage(scene.id, 'x_prediction.jpg'),
-    rgb_gt: resolveSceneImage(scene.id, 'rgb_ground_truth.jpg'),
-    x_gt: resolveSceneImage(scene.id, 'x_ground_truth.jpg'),
+    rgb_original: resolveSceneMedia(
+      scene.id,
+      scene.assetFiles?.rgb_original ?? defaultAssetFiles.rgb_original,
+    ),
+    x_original: resolveSceneMedia(scene.id, scene.assetFiles?.x_original ?? defaultAssetFiles.x_original),
+    rgb_prediction: resolveSceneMedia(
+      scene.id,
+      scene.assetFiles?.rgb_prediction ?? defaultAssetFiles.rgb_prediction,
+    ),
+    x_prediction: resolveSceneMedia(
+      scene.id,
+      scene.assetFiles?.x_prediction ?? defaultAssetFiles.x_prediction,
+    ),
+    rgb_gt: resolveSceneMedia(scene.id, scene.assetFiles?.rgb_gt ?? defaultAssetFiles.rgb_gt),
+    x_gt: resolveSceneMedia(scene.id, scene.assetFiles?.x_gt ?? defaultAssetFiles.x_gt),
   },
 }))
 
@@ -351,21 +460,16 @@ const modalityOptions = [
   { value: 'infrared', label: 'IR' },
 ]
 
-const selectedSceneId = ref('9')
+const selectedSceneId = ref('10')
 const activeView = ref('original')
 const activeModality = ref('rgb')
 const openCategoryKey = ref('complex-light')
-
-const scenePreviewSequence = [
-  { view: 'original', modality: 'rgb' },
-  { view: 'prediction', modality: 'rgb' },
-  { view: 'gt', modality: 'rgb' },
-  { view: 'original', modality: 'infrared' },
-  { view: 'prediction', modality: 'infrared' },
-  { view: 'gt', modality: 'infrared' },
-]
 // 每张图在轮播中的停留时间，单位毫秒。
 const scenePreviewIntervalMs = 2000
+
+const availableViewOptions = computed(() =>
+  viewOptions.filter((option) => currentScene.value.availableViews.includes(option.value)),
+)
 
 const groupedCategories = computed(() =>
   categoryDefinitions.map((category) => ({
@@ -408,29 +512,63 @@ function resolveAssetKey(view, modality) {
   return 'x_gt'
 }
 
-const activeImageKey = computed(() => resolveAssetKey(activeView.value, activeModality.value))
+function getScenePreviewSequence(scene) {
+  const sequence = []
+  const orderedViews = ['original', 'prediction', 'gt']
+  const orderedModalities = ['rgb', 'infrared']
 
-const activeImageSrc = computed(() => currentScene.value.assets[activeImageKey.value] || '')
-const hasActiveImage = computed(() => Boolean(activeImageSrc.value) && !imageErrored.value)
-const isImageLoading = computed(
-  () => Boolean(activeImageSrc.value) && !imageErrored.value && !imageLoaded.value,
+  orderedModalities.forEach((modality) => {
+    orderedViews.forEach((view) => {
+      if (scene.availableViews.includes(view)) {
+        sequence.push({ view, modality })
+      }
+    })
+  })
+
+  return sequence
+}
+
+const activeMediaKey = computed(() => resolveAssetKey(activeView.value, activeModality.value))
+const activeMediaSrc = computed(() => currentScene.value.assets[activeMediaKey.value] || '')
+const isActiveVideo = computed(() => currentScene.value.mediaType === 'video' && Boolean(activeMediaSrc.value))
+const hasActiveMedia = computed(() => Boolean(activeMediaSrc.value) && !mediaErrored.value)
+const isMediaLoading = computed(
+  () =>
+    Boolean(activeMediaSrc.value) &&
+    !mediaErrored.value &&
+    (!mediaLoaded.value || (isActiveVideo.value && videoBuffering.value)),
 )
+const mediaLoadingLabel = computed(() => {
+  if (!isActiveVideo.value) {
+    return '图像加载中'
+  }
 
-const activeImageAlt = computed(
+  if (!mediaLoaded.value) {
+    return '视频加载中'
+  }
+
+  return '视频缓冲中'
+})
+
+const activeMediaAlt = computed(
   () => `${currentScene.value.title} ${currentViewLabel.value} ${currentModalityLabel.value}`,
 )
 
-const activeImageCaption = computed(() => {
-  if (!hasActiveImage.value) {
-    return '当前视图没有可用图像，建议切换其他场景或其他视图继续浏览。'
+const activeMediaCaption = computed(() => {
+  if (!hasActiveMedia.value) {
+    return '当前视图没有可用媒体，建议切换其他场景或其他视图继续浏览。'
   }
 
   if (activeView.value === 'original') {
-    return `当前显示 ${currentModalityLabel.value} 原始输入，用于观察场景本身的感知条件与复杂因素。`
+    return isActiveVideo.value
+      ? `当前播放 ${currentModalityLabel.value} 原始输入视频，用于观察场景本身的感知条件、运动状态与复杂因素。`
+      : `当前显示 ${currentModalityLabel.value} 原始输入图像，用于观察场景本身的感知条件与复杂因素。`
   }
 
   if (activeView.value === 'prediction') {
-    return `当前显示 ${currentModalityLabel.value} 推理结果，用于观察模型在该场景下的输出表现。`
+    return isActiveVideo.value
+      ? `当前播放 ${currentModalityLabel.value} 推理结果视频，用于观察模型在连续帧中的输出稳定性。`
+      : `当前显示 ${currentModalityLabel.value} 推理结果图像，用于观察模型在该场景下的输出表现。`
   }
 
   return `当前显示 ${currentModalityLabel.value} GT 标准答案，用于结果对照。`
@@ -455,15 +593,17 @@ const cueItems = computed(() => [
   },
 ])
 
-watch(activeImageSrc, (nextSrc, previousSrc) => {
-  imageErrored.value = false
+watch(activeMediaSrc, (nextSrc, previousSrc) => {
+  mediaErrored.value = false
+  clearBufferingTimer()
+  videoBuffering.value = Boolean(nextSrc) && currentScene.value.mediaType === 'video'
   if (!nextSrc) {
-    imageLoaded.value = false
+    mediaLoaded.value = false
     return
   }
 
   if (nextSrc !== previousSrc) {
-    imageLoaded.value = false
+    mediaLoaded.value = false
   }
 })
 
@@ -471,6 +611,17 @@ watch(
   selectedSceneId,
   () => {
     openCategoryKey.value = currentScene.value.categoryKey
+    activeView.value = currentScene.value.availableViews.includes(activeView.value)
+      ? activeView.value
+      : currentScene.value.availableViews[0]
+
+    if (currentScene.value.mediaType === 'video') {
+      activeView.value = 'original'
+      activeModality.value = 'rgb'
+      stopScenePreview()
+      return
+    }
+
     startScenePreview()
   },
   { immediate: true },
@@ -482,15 +633,36 @@ function clearScenePreviewTimer() {
   autoplayTimer = null
 }
 
+function clearBufferingTimer() {
+  if (!bufferingTimer) return
+  window.clearTimeout(bufferingTimer)
+  bufferingTimer = null
+}
+
+function hideVideoBuffering() {
+  clearBufferingTimer()
+  videoBuffering.value = false
+}
+
+function scheduleVideoBuffering() {
+  if (!isActiveVideo.value) return
+
+  clearBufferingTimer()
+  bufferingTimer = window.setTimeout(() => {
+    videoBuffering.value = true
+  }, 220)
+}
+
 function scheduleScenePreviewAdvance(sessionToken) {
   if (!isAutoCycling.value || sessionToken !== previewSessionToken) return
 
   clearScenePreviewTimer()
+  const sequence = getScenePreviewSequence(currentScene.value)
 
   autoplayTimer = window.setTimeout(() => {
     if (!isAutoCycling.value || sessionToken !== previewSessionToken) return
 
-    if (previewStepIndex >= scenePreviewSequence.length - 1) {
+    if (previewStepIndex >= sequence.length - 1) {
       stopScenePreview()
       return
     }
@@ -508,35 +680,42 @@ function stopScenePreview() {
 function runScenePreviewStep(sessionToken) {
   if (!isAutoCycling.value || sessionToken !== previewSessionToken) return
 
-  const step = scenePreviewSequence[previewStepIndex]
+  const step = getScenePreviewSequence(currentScene.value)[previewStepIndex]
 
   if (!step) {
     stopScenePreview()
     return
   }
 
-  const nextImageSrc = currentScene.value.assets[resolveAssetKey(step.view, step.modality)] || ''
-  const isSameImage = nextImageSrc === activeImageSrc.value
+  const nextMediaSrc = currentScene.value.assets[resolveAssetKey(step.view, step.modality)] || ''
+  const isSameMedia = nextMediaSrc === activeMediaSrc.value
 
-  imageErrored.value = false
-  if (!isSameImage) {
-    imageLoaded.value = false
+  mediaErrored.value = false
+  clearBufferingTimer()
+  videoBuffering.value = Boolean(nextMediaSrc) && currentScene.value.mediaType === 'video'
+  if (!isSameMedia) {
+    mediaLoaded.value = false
   }
 
   activeView.value = step.view
   activeModality.value = step.modality
 
-  if (!nextImageSrc) {
+  if (!nextMediaSrc) {
     scheduleScenePreviewAdvance(sessionToken)
     return
   }
 
-  if (isSameImage && imageLoaded.value) {
+  if (isSameMedia && mediaLoaded.value) {
     scheduleScenePreviewAdvance(sessionToken)
   }
 }
 
 function startScenePreview() {
+  if (currentScene.value.mediaType === 'video') {
+    stopScenePreview()
+    return
+  }
+
   stopScenePreview()
   previewSessionToken += 1
   previewStepIndex = 0
@@ -546,6 +725,12 @@ function startScenePreview() {
 
 function setSelectedScene(sceneId) {
   if (selectedSceneId.value === sceneId) {
+    if (currentScene.value.mediaType === 'video') {
+      activeView.value = 'original'
+      activeModality.value = 'rgb'
+      return
+    }
+
     startScenePreview()
     return
   }
@@ -572,6 +757,7 @@ function goToNextScene() {
 }
 
 function setActiveView(value) {
+  if (!currentScene.value.availableViews.includes(value)) return
   stopScenePreview()
   activeView.value = value
 }
@@ -581,17 +767,45 @@ function setActiveModality(value) {
   activeModality.value = value
 }
 
-function handleImageLoad() {
-  imageLoaded.value = true
+function handleMediaLoad() {
+  mediaLoaded.value = true
+  hideVideoBuffering()
+
+  if (isActiveVideo.value) {
+    activeVideoRef.value?.play?.().catch(() => {})
+  }
 
   if (isAutoCycling.value) {
     scheduleScenePreviewAdvance(previewSessionToken)
   }
 }
 
-function handleImageError() {
-  imageErrored.value = true
-  imageLoaded.value = false
+function handleVideoLoadStart() {
+  mediaErrored.value = false
+  mediaLoaded.value = false
+  videoBuffering.value = true
+}
+
+function handleVideoCanPlay() {
+  mediaLoaded.value = true
+  hideVideoBuffering()
+  activeVideoRef.value?.play?.().catch(() => {})
+}
+
+function handleVideoPlaying() {
+  mediaLoaded.value = true
+  hideVideoBuffering()
+}
+
+function handleVideoWaiting() {
+  if (!isActiveVideo.value) return
+  scheduleVideoBuffering()
+}
+
+function handleMediaError() {
+  mediaErrored.value = true
+  mediaLoaded.value = false
+  hideVideoBuffering()
 
   if (isAutoCycling.value) {
     scheduleScenePreviewAdvance(previewSessionToken)
@@ -599,25 +813,26 @@ function handleImageError() {
 }
 
 function handleSwitcherKeydown(event, options, currentValue, setter) {
+  const normalizedOptions = Array.isArray(options) ? options : options.value
   const keys = ['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp', 'Home', 'End']
   if (!keys.includes(event.key)) return
 
   event.preventDefault()
 
-  const currentIndex = options.findIndex((option) => option.value === currentValue.value)
+  const currentIndex = normalizedOptions.findIndex((option) => option.value === currentValue.value)
   let nextIndex = currentIndex
 
   if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-    nextIndex = (currentIndex + 1 + options.length) % options.length
+    nextIndex = (currentIndex + 1 + normalizedOptions.length) % normalizedOptions.length
   } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-    nextIndex = (currentIndex - 1 + options.length) % options.length
+    nextIndex = (currentIndex - 1 + normalizedOptions.length) % normalizedOptions.length
   } else if (event.key === 'Home') {
     nextIndex = 0
   } else if (event.key === 'End') {
-    nextIndex = options.length - 1
+    nextIndex = normalizedOptions.length - 1
   }
 
-  setter(options[nextIndex].value)
+  setter(normalizedOptions[nextIndex].value)
 
   const buttons = Array.from(event.currentTarget.querySelectorAll('button'))
   buttons[nextIndex]?.focus()
@@ -650,6 +865,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   stopScenePreview()
+  clearBufferingTimer()
   context?.revert()
 })
 </script>
@@ -1118,12 +1334,14 @@ onBeforeUnmount(() => {
 }
 
 .project-display__image,
+.project-display__video,
 .project-display__empty {
   position: relative;
   z-index: 0;
 }
 
-.project-display__image {
+.project-display__image,
+.project-display__video {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -1131,7 +1349,8 @@ onBeforeUnmount(() => {
   transition: opacity 0.24s ease;
 }
 
-.project-display__image.is-loaded {
+.project-display__image.is-loaded,
+.project-display__video.is-loaded {
   opacity: 1;
 }
 
@@ -1292,7 +1511,8 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .project-display__image {
+  .project-display__image,
+  .project-display__video {
     transition: none;
   }
 

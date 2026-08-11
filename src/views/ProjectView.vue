@@ -371,7 +371,7 @@ const sceneCatalog = [
   },
   {
     id: '10',
-    title: '夜间主干道视频样例',
+    title: '夜间主干道视频',
     categoryKey: 'complex-light',
     tags: ['夜间', '低照度', '车灯干扰'],
     summary: '夜间城市主干道中的连续车流与多目标场景。',
@@ -390,7 +390,7 @@ const sceneCatalog = [
   },
   {
     id: '11',
-    title: '跨江大桥远距视频样例',
+    title: '跨江大桥远距视频',
     categoryKey: 'far-small',
     tags: ['白天', '轻雾感', '远距车辆'],
     summary: '跨江大桥上的长距离道路与远距小目标车辆场景。',
@@ -408,7 +408,7 @@ const sceneCatalog = [
   },
   {
     id: '12',
-    title: '高空俯视道路视频样例',
+    title: '高空俯视道路视频',
     categoryKey: 'far-small',
     tags: ['白天', '高空俯视', '分散车流'],
     summary: '高空俯视下的城市道路远距车流与多目标场景。',
@@ -539,15 +539,7 @@ const isMediaLoading = computed(
     (!mediaLoaded.value || (isActiveVideo.value && videoBuffering.value)),
 )
 const mediaLoadingLabel = computed(() => {
-  if (!isActiveVideo.value) {
-    return '图像加载中'
-  }
-
-  if (!mediaLoaded.value) {
-    return '视频加载中'
-  }
-
-  return '视频缓冲中'
+  return '模型推理中'
 })
 
 const activeMediaAlt = computed(

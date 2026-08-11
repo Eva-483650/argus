@@ -1,10 +1,16 @@
 <template>
-  <div class="layout-container" :class="themeClass">
+  <div class="layout-container" :class="themeClass" @pointermove="handleHeaderReveal">
     <NetworkBackground :mode="bgMode" />
     <div class="page-overlay"></div>
 
     <el-container class="page-shell" :class="{ 'page-shell--immersive': isResearchRoute }">
-      <el-header class="top-header" :class="{ 'top-header--immersive': isResearchRoute }">
+      <el-header
+        class="top-header"
+        :class="{
+          'top-header--immersive': isResearchRoute,
+          'top-header--expanded': isHeaderRevealActive,
+        }"
+      >
         <div class="brand-section">
           <div class="brand-text">
             <h1>Argus</h1>
@@ -48,6 +54,7 @@ import NetworkBackground from '@/views/components/NetworkBackground.vue'
 
 const route = useRoute()
 const isDark = ref(true)
+const isHeaderRevealActive = ref(false)
 
 const bgMode = computed(() => (isDark.value ? 'dark' : 'light'))
 const themeClass = computed(() => (isDark.value ? 'theme-dark' : 'theme-light'))
@@ -57,6 +64,16 @@ provide('argusTheme', readonly(isDark))
 
 function toggleTheme() {
   isDark.value = !isDark.value
+}
+
+function handleHeaderReveal(event) {
+  const supportsHoverHeader = window.matchMedia(
+    '(min-width: 961px) and (hover: hover) and (pointer: fine)',
+  ).matches
+
+  if (supportsHoverHeader) {
+    isHeaderRevealActive.value = event.clientY <= 80
+  }
 }
 
 onMounted(() => {
@@ -179,6 +196,37 @@ watch(isDark, (val) => {
   left: 0;
   right: 0;
   z-index: 5;
+}
+
+@media (min-width: 961px) and (hover: hover) and (pointer: fine) {
+  .top-header {
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: 5;
+    will-change: transform;
+    transform: translateY(calc(-100% + 10px));
+    transition: transform 240ms cubic-bezier(0.25, 1, 0.5, 1);
+
+    &:focus-within,
+    &.top-header--expanded {
+      transform: translateY(0);
+    }
+  }
+
+  .main-content {
+    padding-top: 108px;
+  }
+
+  .main-content--immersive {
+    padding-top: 82px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .top-header {
+    transition-duration: 0.01ms;
+  }
 }
 
 .top-menu {

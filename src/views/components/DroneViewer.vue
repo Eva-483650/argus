@@ -134,12 +134,12 @@ const sections = [
     eyebrow: '实验表现',
     title: '实验结果表明，该框架在检测精度、鲁棒性与实时性之间取得了稳定平衡。',
     description:
-      'RegisterBridgeMM 在 DroneVehicle、LLVIP、FLIR-Aligned 和 M3FD 等公开数据集上均取得稳定且具有竞争力的性能。其中，在 DroneVehicle 数据集上达到 80.4% 的 mAP@0.5 和 61.3% 的 mAP@0.5:0.95，并在单张 RTX 4090 上实现 16.8 FPS 的推理速度。\n\n这些结果说明，方法不仅能有效挖掘 RGB 与红外模态的互补信息，也具备面向真实交通业务的工程可用性，可服务于无人机交通巡检、重点路段车流统计、夜间道路监管和复杂天气下的目标感知。',
+      'RegisterBridgeMM 在 DroneVehicle、LLVIP、FLIR-Aligned 和 M3FD 等公开数据集上均取得稳定且具有竞争力的性能。其中，在 DroneVehicle 数据集上达到 81.5% 的 mAP@0.5 和 61.6% 的 mAP@0.5:0.95，并在单张 RTX 4090 上实现 16.8 FPS 的推理速度。\n\n这些结果说明，方法不仅能有效挖掘 RGB 与红外模态的互补信息，也具备面向真实交通业务的工程可用性，可服务于无人机交通巡检、重点路段车流统计、夜间道路监管和复杂天气下的目标感知。',
     caption: '公开数据集 / 关键指标 / 应用价值',
     align: 'right',
     variant: 'outcome',
     metrics: [
-      { value: '80.4%', label: 'DroneVehicle mAP@0.5' },
+      { value: '81.5%', label: 'DroneVehicle mAP@0.5' },
       { value: '16.8 FPS', label: 'RTX 4090 推理速度' },
     ],
   },

@@ -33,12 +33,12 @@ const routes = [
         component: () => import('@/views/DownloadsView.vue'),
         meta: { title: '资料下载' }
       },
-      // {
-      //   path: 'contact',
-      //   name: 'Contact',
-      //   component: () => import('@/views/ContactView.vue'),
-      //   meta: { title: 'Contact' }
-      // }
+      {
+        path: 'upload',
+        name: 'Upload',
+        component: () => import('@/views/UploadView.vue'),
+        meta: { title: 'Upload' }
+      }
     ]
   },
   {

@@ -41,7 +41,9 @@
               >
                 <div class="project-scene-button__top">
                   <strong>{{ scene.title }}</strong>
-                  <span v-if="scene.badge" class="project-scene-button__badge"> {{ scene.badge }} </span>
+                  <span v-if="scene.badge" class="project-scene-button__badge">
+                    {{ scene.badge }}
+                  </span>
                 </div>
                 <small>{{ compactTags(scene.tags) }}</small>
               </button>
@@ -370,7 +372,7 @@ const sceneCatalog = [
     isFeatured: true,
   },
   {
-    id: '10',
+    id: '11',
     title: '夜间主干道视频',
     categoryKey: 'complex-light',
     tags: ['夜间', '低照度', '车灯干扰'],
@@ -389,7 +391,7 @@ const sceneCatalog = [
     },
   },
   {
-    id: '11',
+    id: '10',
     title: '跨江大桥远距视频',
     categoryKey: 'far-small',
     tags: ['白天', '轻雾感', '远距车辆'],
@@ -435,7 +437,10 @@ const sceneCatalog = [
       scene.id,
       scene.assetFiles?.rgb_original ?? defaultAssetFiles.rgb_original,
     ),
-    x_original: resolveSceneMedia(scene.id, scene.assetFiles?.x_original ?? defaultAssetFiles.x_original),
+    x_original: resolveSceneMedia(
+      scene.id,
+      scene.assetFiles?.x_original ?? defaultAssetFiles.x_original,
+    ),
     rgb_prediction: resolveSceneMedia(
       scene.id,
       scene.assetFiles?.rgb_prediction ?? defaultAssetFiles.rgb_prediction,
@@ -460,7 +465,7 @@ const modalityOptions = [
   { value: 'infrared', label: 'IR' },
 ]
 
-const selectedSceneId = ref('10')
+const selectedSceneId = ref('11')
 const activeView = ref('original')
 const activeModality = ref('rgb')
 const openCategoryKey = ref('complex-light')
@@ -530,7 +535,9 @@ function getScenePreviewSequence(scene) {
 
 const activeMediaKey = computed(() => resolveAssetKey(activeView.value, activeModality.value))
 const activeMediaSrc = computed(() => currentScene.value.assets[activeMediaKey.value] || '')
-const isActiveVideo = computed(() => currentScene.value.mediaType === 'video' && Boolean(activeMediaSrc.value))
+const isActiveVideo = computed(
+  () => currentScene.value.mediaType === 'video' && Boolean(activeMediaSrc.value),
+)
 const hasActiveMedia = computed(() => Boolean(activeMediaSrc.value) && !mediaErrored.value)
 const isMediaLoading = computed(
   () =>
